@@ -3,7 +3,9 @@ import autoclip as ac
 import threading
 import yt_dlp
 from tkinter import messagebox
-
+from tiktok_downloader import snaptik
+import os
+from datetime import datetime
 # Configuração da janela principal
 ctk.set_appearance_mode("light")  # Modo claro
 ctk.set_default_color_theme("blue")  # Tema azul
@@ -268,30 +270,32 @@ def baixar_video_instagram():
             messagebox.showerror("Erro", f"Erro ao baixar o vídeo: {e}")
 def baixar_video_tiktok():
         url = entry_url_tiktok.get()
-        caminho_destino = entry_destino_tiktok.get()
-
-        if not url or not caminho_destino:
+        pasta_destino = entry_destino_tiktok.get()
+        if not url or not pasta_destino:
             messagebox.showerror("Erro", "A URL ou o Caminho de Destino não podem estar vazios!")
             return
-
-        try:
-            ydl_opts = {
-                'ffmpeg_location': r'C:\ffmpeg\bin\ffmpeg.exe',
-                'outtmpl': f'{caminho_destino}/%(title)s.%(ext)s',
-                'format': 'best',
-            }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                messagebox.showinfo("Iniciado", f"Iniciando o download do vídeo: {url}")
-                ydl.download([url])
-                messagebox.showinfo("Concluído", "Download concluído com sucesso!")
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao baixar o vídeo: {e}")
+        # Certifique-se de que a pasta existe
+        if not os.path.exists(pasta_destino):
+            os.makedirs(pasta_destino)
+        # Baixando o vídeo
+        d = snaptik(url)
+        messagebox.showinfo("Iniciado", f"Iniciando o download do vídeo: {url}")
+        # Nome do arquivo
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Formato: AAAAMMDD_HHMMSS
+        nome_arquivo = f'video_{timestamp}.mp4'
+        # Caminho completo para salvar o vídeo
+        caminho_completo = os.path.join(pasta_destino, nome_arquivo)
+        d[0].download(caminho_completo)
+        messagebox.showinfo("Concluído", f"Download concluído com sucesso! Vídeo salvo em: {caminho_completo}")
+    
+     
 
 
     # Função para criar a interface de download do YouTube
 def criar_interface_youtube():
         global entry_url_youtube, entry_destino_youtube
         root_youtube = ctk.CTk()
+        root_youtube.geometry("400x400")
 
         label_titulo = ctk.CTkLabel(root_youtube, text="Baixar Vídeo do YouTube", font=("Arial", 18))
         label_titulo.pack(pady=10)
@@ -316,6 +320,7 @@ def criar_interface_youtube():
 def criar_interface_instagram():
         global entry_url_instagram, entry_destino_instagram
         root_instagram = ctk.CTk()
+        root_instagram.geometry("400x400")
 
         label_titulo_instagram = ctk.CTkLabel(root_instagram, text="Baixar Vídeo do Instagram", font=("Arial", 18))
         label_titulo_instagram.pack(pady=10)
@@ -340,6 +345,7 @@ def criar_interface_instagram():
 def criar_interface_tiktok():
         global entry_url_tiktok, entry_destino_tiktok
         root_tiktok = ctk.CTk()
+        root_tiktok.geometry("400x400")
 
         label_titulo_tiktok = ctk.CTkLabel(root_tiktok, text="Baixar Vídeo do TikTok", font=("Arial", 18))
         label_titulo_tiktok.pack(pady=10)
