@@ -6,13 +6,14 @@ from tkinter import messagebox
 from tiktok_downloader import snaptik
 import os
 from datetime import datetime
+from tkinter.filedialog import askdirectory, askopenfilename
 # Configuração da janela principal
 ctk.set_appearance_mode("light")  # Modo claro
 ctk.set_default_color_theme("blue")  # Tema azul
 
 janela = ctk.CTk()
 janela.title('CRIAÇÃO DE CLIP')
-janela.geometry("450x600")
+janela.geometry("450x625")
 janela.configure(bg='white')
 
 tabview = ctk.CTkTabview(janela)
@@ -23,164 +24,138 @@ tabview.add("MIXCLIP")
 tabview.add("BAIXCLIPS")
 tabview.add("Aba 3")
 
+
+
 def clipmix():
     quadro_menu = ctk.CTkFrame(tabview.tab("MIXCLIP"))
     quadro_menu.pack()
-    opicoes = ctk.CTkLabel(quadro_menu, text=('1 - CORTAR OS VIDEOS\n'
-                                              '2 - RENOMEAR VIDEOS\n'
-                                              '3 - CONTAR VIDEOS\n'
-                                              '4 - APAGAR VIDEOS\n'
-                                              '5 - JUNTAR OS VIDEOS'), font=("Arial", 17))
+    opicoes = ctk.CTkLabel(quadro_menu, text=(
+        '1 - CORTAR OS VIDEOS\n'
+        '2 - RENOMEAR VIDEOS\n'
+        '3 - CONTAR VIDEOS\n'
+        '4 - APAGAR VIDEOS\n'
+        '5 - JUNTAR OS VIDEOS'
+    ), font=("Arial", 17))
     opicoes.pack(pady=10)
+
     win = ctk.CTkFrame(tabview.tab("MIXCLIP"), fg_color="transparent")
     win.pack()
 
-    def confirmar_juncao(caminho_file, caminho_video_baixo):
-        try:
-            m = ctk.CTkLabel(win, text='Juntando...', text_color="green")
-            m.pack(pady=10)
-            ac.juntar_videos(caminho_file, caminho_video_baixo)
-            mensagem_sucesso = ctk.CTkLabel(win, text='Vídeos prontos!', text_color="green")
-            mensagem_sucesso.pack(pady=10)
-        except Exception as e:
-            mensagem_erro = ctk.CTkLabel(win, text=f'Erro: {str(e)}', text_color="red")
-            mensagem_erro.pack(pady=10)
+    def limpar_interface():
+        for widget in win.winfo_children():
+            widget.pack_forget()
 
-    def apagar_msg(caminho, numero_videos):
-        # Validar o caminho
-        if not caminho:
-            erro = ctk.CTkLabel(win, text="Erro: O caminho não pode estar vazio.")
-            erro.pack(pady=(10, 5))
-            return
-        
-        # Validar o número de vídeos
-        try:
-            numero_videos = int(numero_videos)
-            if numero_videos < 1:
-                erro = ctk.CTkLabel(win, text="Erro: O número de vídeos deve ser um inteiro positivo.")
-                erro.pack(pady=(10, 5))
-                return
-        except ValueError:
-            erro = ctk.CTkLabel(win, text='Erro: Por favor, insira um inteiro válido para o número de vídeos.')
-            erro.pack(pady=(10, 5))
-            return
+    def mostrar_mensagem(texto, cor="green"):
+        mensagem = ctk.CTkLabel(win, text=texto, text_color=cor)
+        mensagem.pack(pady=10)
+    
+    def selecionar_video(entry_widget):
+        arquivo_selecionado = askopenfilename(filetypes=[("Vídeos", "*.mp4;*.avi;*.mkv")])
+        if arquivo_selecionado:
+            entry_widget.delete(0, 'end')
+            entry_widget.insert(0, arquivo_selecionado)
 
-        # Prosseguir com a exclusão se as validações passarem
-        ac.delete_file(caminho, numero_videos)
-        r = ctk.CTkLabel(win, text='Vídeos deletados com sucesso', text_color="green")
-        r.pack(pady=10)
-
-    def rename_new(caminho, texto_renomear):
-        rename_videos = ac.rename_clip(caminho, texto_renomear)
-        g = ctk.CTkLabel(win, text=f'Vídeos renomeados com sucesso: {rename_videos} vídeos', text_color="green")
-        g.pack(pady=(10, 5))
-
-    def mostrar_contagem(caminho):
-        a = ac.count_videos(caminho)
-        o = ctk.CTkLabel(win, text=f'Número de vídeos: {a}')
-        o.pack(pady=(10, 5))
-
-    def confirmar_corte(caminho, pasta_saida, intervalo):
-        try:
-            m = ctk.CTkLabel(win, text='Cortando...', text_color="green")
-            m.pack(pady=10)
-            intervalo = int(intervalo.get())  # Use entrada do usuário para intervalo
-            ac.cut_clip(caminho, pasta_saida, intervalo)
-            mensagem_sucesso = ctk.CTkLabel(win, text='Vídeo cortado com sucesso!', text_color="green")
-            mensagem_sucesso.pack(pady=10)
-        except Exception as e:
-            mensagem_erro = ctk.CTkLabel(win, text=f'Erro: {str(e)}', text_color="red")
-            mensagem_erro.pack(pady=10)
+    def selecionar_pasta(entry_widget):
+        pasta_selecionada = askdirectory()
+        if pasta_selecionada:
+            entry_widget.delete(0, 'end')
+            entry_widget.insert(0, pasta_selecionada)
 
     def btn_click(opcao):
-        estilo = {"width": 220, "height": 30}
-        # Funções para cada operação
-        if opcao == 1:
-            # Limpar a interface anterior
-            for widget in win.winfo_children():
-                widget.pack_forget()
+        limpar_interface()
+        estilo = {"width": 300, "height": 30}
 
-            texto = ctk.CTkLabel(win, text='Digite o caminho do vídeo que vai ser cortado:')
-            texto.pack(pady=(10, 5))
+        if opcao == 1:  # Cortar Vídeos
+            ctk.CTkLabel(win, text="Cortar Vídeo:").pack(pady=(10, 5))
+            caminho = ctk.CTkEntry(win, placeholder_text="Caminho do vídeo", **estilo)
+            caminho.pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Vídeo", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+            pasta_saida = ctk.CTkEntry(win, placeholder_text="Pasta para salvar", **estilo)
+            pasta_saida.pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(pasta_saida)).pack(pady=5)
+            intervalo = ctk.CTkEntry(win, placeholder_text="Intervalo (segundos)", **estilo)
+            intervalo.pack(pady=5)
 
-            # Campos de entrada
-            caminho_pasta = ctk.CTkEntry(win, placeholder_text='Caminho do vídeo', **estilo)
-            caminho_pasta.pack(pady=(0, 10))
-            pasta_saida = ctk.CTkEntry(win, placeholder_text='Caminho da pasta para salvar', **estilo)
-            pasta_saida.pack(pady=(0, 10))
-            intervalo = ctk.CTkEntry(win, placeholder_text='Intervalo em segundos', **estilo)
-            intervalo.pack(pady=(0, 10))
+            def cortar_video():
+                try:
+                    mostrar_mensagem("Cortando vídeo...")
+                    ac.cut_clip(caminho.get(), pasta_saida.get(), int(intervalo.get()))
+                    mostrar_mensagem("Corte concluído!")
+                except Exception as e:
+                    mostrar_mensagem(f"Erro: {e}", "red")
 
-            botao_confirmar = ctk.CTkButton(win, text='Cortar Vídeo', command=lambda: threading.Thread(target=confirmar_corte, args=(caminho_pasta.get(), pasta_saida.get(), intervalo)).start())
-            botao_confirmar.pack(pady=10)
+            ctk.CTkButton(win, text="Cortar", command=lambda: threading.Thread(target=cortar_video).start()).pack(pady=10)
 
-        elif opcao == 2:
-            # Limpar a interface anterior
-            for widget in win.winfo_children():
-                widget.pack_forget()
+        elif opcao == 2:  # Renomear Vídeos
+            ctk.CTkLabel(win, text="Renomear Vídeos:").pack(pady=(10, 5))
+            caminho = ctk.CTkEntry(win, placeholder_text="Caminho da pasta", **estilo)
+            caminho.pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+            novo_nome = ctk.CTkEntry(win, placeholder_text="Novo nome base", **estilo)
+            novo_nome.pack(pady=5)
 
-            texto = ctk.CTkLabel(win, text='Digite o caminho da pasta que contém os vídeos:')
-            texto.pack(pady=(10, 5))
+            def renomear_videos():
+                try:
+                    renomeados = ac.rename_clip(caminho.get(), novo_nome.get())
+                    mostrar_mensagem(f"Renomeados: {renomeados} vídeos.")
+                except Exception as e:
+                    mostrar_mensagem(f"Erro: {e}", "red")
 
-            caminho = ctk.CTkEntry(win, placeholder_text='Caminho da pasta', **estilo)
-            caminho.pack(pady=(0, 10))
+            ctk.CTkButton(win, text="Renomear", command=lambda: threading.Thread(target=renomear_videos).start()).pack(pady=10)
 
-            texto_renomear = ctk.CTkEntry(win, placeholder_text='Texto para renomear', **estilo)
-            texto_renomear.pack(pady=(0, 10))
+        elif opcao == 3:  # Contar Vídeos
+            ctk.CTkLabel(win, text="Contar Vídeos:").pack(pady=(10, 5))
+            caminho = ctk.CTkEntry(win, placeholder_text="Caminho da pasta", **estilo)
+            caminho.pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
 
-            botao_confirmar = ctk.CTkButton(win, text='Renomear Vídeos', command=lambda: rename_new(caminho.get(), texto_renomear.get()))
-            botao_confirmar.pack(pady=10)
+            def contar_videos():
+                try:
+                    contagem = ac.count_videos(caminho.get())
+                    mostrar_mensagem(f"Número de vídeos: {contagem}")
+                except Exception as e:
+                    mostrar_mensagem(f"Erro: {e}", "red")
 
-        elif opcao == 3:
-            # Limpar a interface anterior
-            for widget in win.winfo_children():
-                widget.pack_forget()
+            ctk.CTkButton(win, text="Contar", command=lambda: threading.Thread(target=contar_videos).start()).pack(pady=10)
 
-            texto = ctk.CTkLabel(win, text='Digite o caminho da pasta que contém os vídeos:')
-            texto.pack(pady=(10, 5))
+        elif opcao == 4:  # Apagar Vídeos
+            ctk.CTkLabel(win, text="Apagar Vídeos:").pack(pady=(10, 5))
+            caminho = ctk.CTkEntry(win, placeholder_text="Caminho da pasta", **estilo)
+            caminho.pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+            numero = ctk.CTkEntry(win, placeholder_text="Quantidade", **estilo)
+            numero.pack(pady=5)
 
-            caminho = ctk.CTkEntry(win, placeholder_text='Caminho da pasta', **estilo)
-            caminho.pack(pady=(0, 10))
+            def apagar_videos():
+                try:
+                    ac.delete_file(caminho.get(), int(numero.get()))
+                    mostrar_mensagem("Vídeos apagados com sucesso!")
+                except Exception as e:
+                    mostrar_mensagem(f"Erro: {e}", "red")
 
-            botao_contar = ctk.CTkButton(win, text='Contar Vídeos', command=lambda: mostrar_contagem(caminho.get()))
-            botao_contar.pack(pady=10)
+            ctk.CTkButton(win, text="Apagar", command=lambda: threading.Thread(target=apagar_videos).start()).pack(pady=10)
 
-        elif opcao == 4:
-            # Limpar a interface anterior
-            for widget in win.winfo_children():
-                widget.pack_forget()
+        elif opcao == 5:  # Juntar Vídeos
+            ctk.CTkLabel(win, text="Juntar Vídeos:").pack(pady=(10, 5))
+            caminho1 = ctk.CTkEntry(win, placeholder_text="Caminho do vídeo de cima", **estilo)
+            caminho1.pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho1)).pack(pady=5)
+            caminho2 = ctk.CTkEntry(win, placeholder_text="Caminho do vídeo de baixo", **estilo)
+            caminho2.pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho2)).pack(pady=5)
 
-            texto = ctk.CTkLabel(win, text='Digite o caminho da pasta que contém os vídeos:')
-            texto.pack(pady=(10, 5))
+            def juntar_videos():
+                try:
+                    ac.juntar_videos(caminho1.get(), caminho2.get())
+                    mostrar_mensagem("Vídeos juntados com sucesso!")
+                except Exception as e:
+                    mostrar_mensagem(f"Erro: {e}", "red")
 
-            caminho = ctk.CTkEntry(win, placeholder_text='Caminho da pasta dos vídeos', **estilo)
-            caminho.pack(pady=(0, 10))
+            ctk.CTkButton(win, text="Juntar", command=lambda: threading.Thread(target=juntar_videos).start()).pack(pady=10)
 
-            numero_videos = ctk.CTkEntry(win, placeholder_text="Número de arquivos para ser apagados", **estilo)
-            numero_videos.pack(pady=(0, 10))
-
-            botao_apagar = ctk.CTkButton(win, text='Apagar Vídeos', command=lambda: apagar_msg(caminho.get(), numero_videos.get()))
-            botao_apagar.pack(pady=10)
-
-        elif opcao == 5:
-            # Limpar a interface anterior
-            for widget in win.winfo_children():
-                widget.pack_forget()
-
-            texto = ctk.CTkLabel(win, text='Digite o caminho da pasta que contém os vídeos:')
-            texto.pack(pady=(10, 5))
-
-            caminho_file = ctk.CTkEntry(win, placeholder_text='Vídeo de cima', **estilo)
-            caminho_file.pack(pady=(0, 10))
-
-            caminho_video_baixo = ctk.CTkEntry(win, placeholder_text='Vídeo de baixo', **estilo)
-            caminho_video_baixo.pack(pady=(0, 10))
-
-            botao_juntar = ctk.CTkButton(win, text='Juntar Vídeos', command=lambda: confirmar_juncao(caminho_file.get(), caminho_video_baixo.get()))
-            botao_juntar.pack(pady=10)
-
+    
     # Criando os botões e associando as funções
-    botao_estilo = {"width": 20, "height": 40, "font": ("Arial", 14)}
+    botao_estilo = {"width": 20, "height": 30, "font": ("Arial", 14)}
 
     quadro_botoes1 = ctk.CTkFrame(quadro_menu, fg_color="transparent")
     quadro_botoes1.pack(pady=5)
@@ -203,7 +178,6 @@ def clipmix():
 
     op5 = ctk.CTkButton(quadro_botoes3, text='5 - JUNTAR', command=lambda: btn_click(5), **botao_estilo)
     op5.pack(side="left", padx=10)
-
 clipmix()
 
 
