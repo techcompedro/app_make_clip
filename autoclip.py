@@ -10,29 +10,23 @@ def cut_clip(caminho_video, pasta_saida, intervalo):
     # Verifica se o arquivo existe
     if not os.path.exists(caminho_video):
         raise FileNotFoundError(f"O arquivo de vídeo '{caminho_video}' não foi encontrado.")
-
     # Cria a pasta de saída, se não existir
     os.makedirs(pasta_saida, exist_ok=True)
-
     try:
         # Carrega o vídeo
         video = VideoFileClip(caminho_video)
         duracao_total = video.duration  # Duração total do vídeo em segundos
-
         # Divide o vídeo em partes de tamanho especificado
         for i, inicio in enumerate(range(0, int(duracao_total), intervalo), start=1):
             fim = min(inicio + intervalo, duracao_total)  # Garante que o último clipe não exceda a duração total
-            clipe = video.subclipped(inicio, fim)
-
+            clipe = video.subclip(inicio, fim)
             # Nome do arquivo de saída com "parte X"
             nome_arquivo = os.path.join(pasta_saida, f"parte_{i}.mp4")
-
             # Salva o clipe se ele ainda não existir
             if not os.path.exists(nome_arquivo):
                 clipe.write_videofile(nome_arquivo, codec="libx264", audio_codec="aac")
     except Exception as e:
         print(f"Erro ao processar o vídeo: {e}")
-
     finally:
         # Fecha o vídeo para liberar recursos
         if 'video' in locals():

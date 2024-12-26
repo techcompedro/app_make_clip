@@ -60,6 +60,18 @@ def clipmix():
         if pasta_selecionada:
             entry_widget.delete(0, 'end')
             entry_widget.insert(0, pasta_selecionada)
+    
+    def confirmar_corte(caminho, pasta_saida, intervalo):
+        try:
+            m = ctk.CTkLabel(win, text='Cortando...', text_color="green")
+            m.pack(pady=10)
+            intervalo = int(intervalo.get())  # Use entrada do usuário para intervalo
+            ac.cut_clip(caminho, pasta_saida, intervalo)
+            mensagem_sucesso = ctk.CTkLabel(win, text='Vídeo cortado com sucesso!', text_color="green")
+            mensagem_sucesso.pack(pady=10)
+        except Exception as e:
+            mensagem_erro = ctk.CTkLabel(win, text=f'Erro: {str(e)}', text_color="red")
+            mensagem_erro.pack(pady=10)
 
     def btn_click(opcao):
         limpar_interface()
@@ -69,13 +81,12 @@ def clipmix():
             ctk.CTkLabel(win, text="Cortar Vídeo:").pack(pady=(10, 5))
             caminho = ctk.CTkEntry(win, placeholder_text="Caminho do vídeo", **estilo)
             caminho.pack(pady=5)
-            ctk.CTkButton(win, text="Selecionar Vídeo", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Vídeo", command=lambda: selecionar_video(caminho)).pack(pady=5)
             pasta_saida = ctk.CTkEntry(win, placeholder_text="Pasta para salvar", **estilo)
             pasta_saida.pack(pady=5)
             ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(pasta_saida)).pack(pady=5)
             intervalo = ctk.CTkEntry(win, placeholder_text="Intervalo (segundos)", **estilo)
             intervalo.pack(pady=5)
-
             def cortar_video():
                 try:
                     mostrar_mensagem("Cortando vídeo...")
@@ -86,6 +97,7 @@ def clipmix():
 
             ctk.CTkButton(win, text="Cortar", command=lambda: threading.Thread(target=cortar_video).start()).pack(pady=10)
 
+        
         elif opcao == 2:  # Renomear Vídeos
             ctk.CTkLabel(win, text="Renomear Vídeos:").pack(pady=(10, 5))
             caminho = ctk.CTkEntry(win, placeholder_text="Caminho da pasta", **estilo)
@@ -178,6 +190,7 @@ def clipmix():
 
     op5 = ctk.CTkButton(quadro_botoes3, text='5 - JUNTAR', command=lambda: btn_click(5), **botao_estilo)
     op5.pack(side="left", padx=10)
+
 clipmix()
 
 
