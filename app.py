@@ -7,13 +7,15 @@ from tiktok_downloader import snaptik
 import os
 from datetime import datetime
 from tkinter.filedialog import askdirectory, askopenfilename
+from moviepy import VideoFileClip, clips_array
+
 # Configuração da janela principal
 ctk.set_appearance_mode("light")  # Modo claro
 ctk.set_default_color_theme("blue")  # Tema azul
 
 janela = ctk.CTk()
 janela.title('CRIAÇÃO DE CLIP')
-janela.geometry("450x625")
+janela.geometry("400x670")
 janela.configure(bg='white')
 
 tabview = ctk.CTkTabview(janela)
@@ -61,18 +63,6 @@ def clipmix():
             entry_widget.delete(0, 'end')
             entry_widget.insert(0, pasta_selecionada)
     
-    def confirmar_corte(caminho, pasta_saida, intervalo):
-        try:
-            m = ctk.CTkLabel(win, text='Cortando...', text_color="green")
-            m.pack(pady=10)
-            intervalo = int(intervalo.get())  # Use entrada do usuário para intervalo
-            ac.cut_clip(caminho, pasta_saida, intervalo)
-            mensagem_sucesso = ctk.CTkLabel(win, text='Vídeo cortado com sucesso!', text_color="green")
-            mensagem_sucesso.pack(pady=10)
-        except Exception as e:
-            mensagem_erro = ctk.CTkLabel(win, text=f'Erro: {str(e)}', text_color="red")
-            mensagem_erro.pack(pady=10)
-
     def btn_click(opcao):
         limpar_interface()
         estilo = {"width": 300, "height": 30}
@@ -97,7 +87,6 @@ def clipmix():
 
             ctk.CTkButton(win, text="Cortar", command=lambda: threading.Thread(target=cortar_video).start()).pack(pady=10)
 
-        
         elif opcao == 2:  # Renomear Vídeos
             ctk.CTkLabel(win, text="Renomear Vídeos:").pack(pady=(10, 5))
             caminho = ctk.CTkEntry(win, placeholder_text="Caminho da pasta", **estilo)
@@ -148,24 +137,87 @@ def clipmix():
             ctk.CTkButton(win, text="Apagar", command=lambda: threading.Thread(target=apagar_videos).start()).pack(pady=10)
 
         elif opcao == 5:  # Juntar Vídeos
-            ctk.CTkLabel(win, text="Juntar Vídeos:").pack(pady=(10, 5))
-            caminho1 = ctk.CTkEntry(win, placeholder_text="Caminho do vídeo de cima", **estilo)
-            caminho1.pack(pady=5)
-            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho1)).pack(pady=5)
-            caminho2 = ctk.CTkEntry(win, placeholder_text="Caminho do vídeo de baixo", **estilo)
-            caminho2.pack(pady=5)
-            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho2)).pack(pady=5)
+                    
+            # Função para selecionar diretório
+            def selecionar_diretorio(entry_widget):
+                caminho = askdirectory()
+                if caminho:
+                    entry_widget.delete(0, ctk.END)
+                    entry_widget.insert(0, caminho)
 
-            def juntar_videos():
+            # Função para combinar vídeos correspondentes
+            def combinar_videos():
+                pasta1_path = entrada_pasta1.get()
+                pasta2_path = entrada_pasta2.get()
+                output_dir = entrada_saida.get()
+
                 try:
-                    ac.juntar_videos(caminho1.get(), caminho2.get())
-                    mostrar_mensagem("Vídeos juntados com sucesso!")
+                    # Listar vídeos em cada pasta, ordenados alfabeticamente
+                    videos_pasta1 = sorted([os.path.join(pasta1_path, f) for f in os.listdir(pasta1_path) if f.endswith('.mp4')])
+                    videos_pasta2 = sorted([os.path.join(pasta2_path, f) for f in os.listdir(pasta2_path) if f.endswith('.mp4')])
+
+                    # Verificar se há o mesmo número de vídeos em ambas as pastas
+                    if len(videos_pasta1) != len(videos_pasta2):
+                        resultado_label.configure(text="Erro: As pastas devem conter o mesmo número de vídeos.")
+                        return
+
+                    # Combinar vídeos correspondentes
+                    for i, (video1, video2) in enumerate(zip(videos_pasta1, videos_pasta2)):
+                        clip1 = VideoFileClip(video1)
+                        clip2 = VideoFileClip(video2)
+
+                        # Combinar os dois vídeos
+                        final_clip = clips_array([[clip1], 
+                                                [clip2]])
+
+                        # Salvar o vídeo final
+                        output_path = os.path.join(output_dir, f"video_combinado_{i+1}.mp4")
+                        final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
+
+                    resultado_label.configure(text="Todos os vídeos foram combinados com sucesso!")
+                except FileNotFoundError as e:
+                    resultado_label.configure(text=f"Erro: Arquivo ou pasta não encontrado. Detalhes: {e}")
                 except Exception as e:
-                    mostrar_mensagem(f"Erro: {e}", "red")
+                    resultado_label.configure(text=f"Erro ao combinar vídeos. Detalhes: {e}")
+                
+                # Widgets de seleção de pastas
+                # Widgets de seleção de pastas
+            label_pasta1 = ctk.CTkLabel(win, text="Pasta 1:", **estilo)
+            label_pasta1.pack(pady=3)
 
-            ctk.CTkButton(win, text="Juntar", command=lambda: threading.Thread(target=juntar_videos).start()).pack(pady=10)
+            entrada_pasta1 = ctk.CTkEntry(win, placeholder_text='pasta ccom o video que vai em cima', **estilo)
+            entrada_pasta1.pack(pady=3)
 
+            botao_pasta1 = ctk.CTkButton(win, text="Selecionar Pasta 1", command=lambda: selecionar_diretorio(entrada_pasta1))
+            botao_pasta1.pack(pady=3)
+
+            label_pasta2 = ctk.CTkLabel(win, text="Pasta 2:")
+            label_pasta2.pack(pady=3)
+
+            entrada_pasta2 = ctk.CTkEntry(win, placeholder_text='pasta ccom o video que vai em baixo', **estilo)
+            entrada_pasta2.pack(pady=3)
+
+            botao_pasta2 = ctk.CTkButton(win, text="Selecionar Pasta 2", command=lambda: selecionar_diretorio(entrada_pasta2))
+            botao_pasta2.pack(pady=3)
+
+            # Widgets para selecionar diretório de saída
+            label_saida = ctk.CTkLabel(win, text="Diretório de saída:")
+            label_saida.pack(pady=3)
+
+            entrada_saida = ctk.CTkEntry(win,placeholder_text='pasta ccom o video que vai em cima',  **estilo)
+            entrada_saida.pack(pady=3)
+
+            botao_saida = ctk.CTkButton(win, text="Selecionar Diretório", command=lambda: selecionar_diretorio(entrada_saida))
+            botao_saida.pack(pady=3)
+            # Botão para combinar vídeos
+            botao_combinar = ctk.CTkButton(win, text="Combinar Vídeos", command=combinar_videos)
+            botao_combinar.pack(pady=3)
+
+            # Label para exibir o resultado
+            resultado_label = ctk.CTkLabel(win, text="")
+            resultado_label.pack(pady=3)
     
+        
     # Criando os botões e associando as funções
     botao_estilo = {"width": 20, "height": 30, "font": ("Arial", 14)}
 

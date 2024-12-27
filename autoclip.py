@@ -1,11 +1,13 @@
-import moviepy as m
-from moviepy.video.io.VideoFileClip import VideoFileClip
 import os
-import yt_dlp
+from moviepy import VideoFileClip, clips_array 
+from datetime import datetime
+from moviepy import VideoFileClip, clips_array
 import customtkinter as ctk
-from tkinter import messagebox
-
-
+from tkinter import filedialog
+from tkinter.filedialog import askdirectory
+from moviepy import VideoFileClip, clips_array
+import os
+from datetime import datetime
 def cut_clip(caminho_video, pasta_saida, intervalo):
     # Verifica se o arquivo existe
     if not os.path.exists(caminho_video):
@@ -21,7 +23,9 @@ def cut_clip(caminho_video, pasta_saida, intervalo):
             fim = min(inicio + intervalo, duracao_total)  # Garante que o último clipe não exceda a duração total
             clipe = video.subclip(inicio, fim)
             # Nome do arquivo de saída com "parte X"
-            nome_arquivo = os.path.join(pasta_saida, f"parte_{i}.mp4")
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Formato: AAAAMMDD_HHMMSS
+            nome_arquivo = f'video_{timestamp}.mp4'
+            nome_arquivo = os.path.join(pasta_saida, f"parte_{nome_arquivo}.mp4")
             # Salva o clipe se ele ainda não existir
             if not os.path.exists(nome_arquivo):
                 clipe.write_videofile(nome_arquivo, codec="libx264", audio_codec="aac")
@@ -32,46 +36,97 @@ def cut_clip(caminho_video, pasta_saida, intervalo):
         if 'video' in locals():
             video.close()
 
-def mix_clip (caminho_file, caminho_video_baixo):
-    # Inicializa listas para armazenar os nomes dos arquivos
-    arquivos = []
-    quivos = []
+def mix_clip():
+    
 
-# Itera sobre os itens da pasta caminho_file
-    for item in os.listdir(caminho_file):
-        caminho_completo = os.path.join(caminho_file, item)
-            
-        if os.path.isfile(caminho_completo):
-            arquivos.append(item)
+    # Função para selecionar diretório
+    def selecionar_diretorio(entry_widget):
+        caminho = askdirectory()
+        if caminho:
+            entry_widget.delete(0, ctk.END)
+            entry_widget.insert(0, caminho)
 
-    # Itera sobre os itens da pasta caminho_video_baixo
-    for item in os.listdir(caminho_video_baixo):
-        caminho_complet = os.path.join(caminho_video_baixo, item)
-            
-        if os.path.isfile(caminho_complet):
-            quivos.append(item)
+    # Função para combinar vídeos correspondentes
+    def combinar_videos():
+        pasta1_path = entrada_pasta1.get()
+        pasta2_path = entrada_pasta2.get()
+        output_dir = entrada_saida.get()
 
-        # Verifica se as listas possuem o mesmo número de arquivos
-        if len(arquivos) != len(quivos):
-            print("")
-        else:
-            # Processa cada par de vídeos
-            for arquivo, ivos in zip(arquivos, quivos):
-                video1 = arquivo
-                video2 = ivos
-                
-                # Carrega os vídeos
-                v1 = m.VideoFileClip(os.path.join(caminho_file, video1))
-                v2 = m.VideoFileClip(os.path.join(caminho_video_baixo, video2))
-                
-                # Junta os vídeos
-                video_junto = m.clips_array([[v1], [v2]])
-                
-                # Salva o vídeo final
-                video_junto.write_videofile(f"teste_{video1}", codec="libx264")
-                
-                videos_junto = (f"{video1} e {video2}")
-                return videos_junto
+        try:
+            # Listar vídeos em cada pasta, ordenados alfabeticamente
+            videos_pasta1 = sorted([os.path.join(pasta1_path, f) for f in os.listdir(pasta1_path) if f.endswith('.mp4')])
+            videos_pasta2 = sorted([os.path.join(pasta2_path, f) for f in os.listdir(pasta2_path) if f.endswith('.mp4')])
+
+            # Verificar se há o mesmo número de vídeos em ambas as pastas
+            if len(videos_pasta1) != len(videos_pasta2):
+                resultado_label.configure(text="Erro: As pastas devem conter o mesmo número de vídeos.")
+                return
+
+            # Combinar vídeos correspondentes
+            for i, (video1, video2) in enumerate(zip(videos_pasta1, videos_pasta2)):
+                clip1 = VideoFileClip(video1)
+                clip2 = VideoFileClip(video2)
+
+                # Combinar os dois vídeos
+                final_clip = clips_array([[clip1], 
+                                        [clip2]])
+
+                # Salvar o vídeo final
+                output_path = os.path.join(output_dir, f"video_combinado_{i+1}.mp4")
+                final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
+
+            resultado_label.configure(text="Todos os vídeos foram combinados com sucesso!")
+        except FileNotFoundError as e:
+            resultado_label.configure(text=f"Erro: Arquivo ou pasta não encontrado. Detalhes: {e}")
+        except Exception as e:
+            resultado_label.configure(text=f"Erro ao combinar vídeos. Detalhes: {e}")
+
+        # Configuração da janela principal
+        ctk.set_appearance_mode("System")
+        ctk.set_default_color_theme("blue")
+
+        janela = ctk.CTk()
+        janela.title("Combinar Vídeos Correspondentes")
+        janela.geometry("600x500")
+
+        # Widgets de seleção de pastas
+        label_pasta1 = ctk.CTkLabel(janela, text="Pasta 1:")
+        label_pasta1.pack(pady=10)
+
+        entrada_pasta1 = ctk.CTkEntry(janela, width=400)
+        entrada_pasta1.pack(pady=5)
+
+        botao_pasta1 = ctk.CTkButton(janela, text="Selecionar Pasta 1", command=lambda: selecionar_diretorio(entrada_pasta1))
+        botao_pasta1.pack(pady=5)
+
+        label_pasta2 = ctk.CTkLabel(janela, text="Pasta 2:")
+        label_pasta2.pack(pady=10)
+
+        entrada_pasta2 = ctk.CTkEntry(janela, width=400)
+        entrada_pasta2.pack(pady=5)
+
+        botao_pasta2 = ctk.CTkButton(janela, text="Selecionar Pasta 2", command=lambda: selecionar_diretorio(entrada_pasta2))
+        botao_pasta2.pack(pady=5)
+
+        # Widgets para selecionar diretório de saída
+        label_saida = ctk.CTkLabel(janela, text="Diretório de saída:")
+        label_saida.pack(pady=10)
+
+        entrada_saida = ctk.CTkEntry(janela, width=400)
+        entrada_saida.pack(pady=5)
+
+        botao_saida = ctk.CTkButton(janela, text="Selecionar Diretório", command=lambda: selecionar_diretorio(entrada_saida))
+        botao_saida.pack(pady=5)
+
+        # Botão para combinar vídeos
+        botao_combinar = ctk.CTkButton(janela, text="Combinar Vídeos", command=combinar_videos)
+        botao_combinar.pack(pady=20)
+
+        # Label para exibir o resultado
+        resultado_label = ctk.CTkLabel(janela, text="")
+        resultado_label.pack(pady=10)
+
+        janela.mainloop()
 
 def rename_clip(caminho, texto):
     try:
