@@ -10,7 +10,9 @@ from tkinter.filedialog import askdirectory, askopenfilename
 from moviepy import VideoFileClip, clips_array
 import edge_tts
 import asyncio
-
+import pdfplumber
+from tkinter import filedialog
+from docx import Document
 
 # Configuração da janela principal
 ctk.set_appearance_mode("light")  # Modo claro
@@ -27,7 +29,7 @@ tabview.pack(padx=20, pady=20, fill="both", expand=True)
 # Adicionando abas
 tabview.add("MIX CLIP")
 tabview.add("BAIX CLIP")
-tabview.add("DEEP CLIP")
+tabview.add("TESTIN AUDI")
 tabview.add("TEXT AUDI")
 
 def clipmix():
@@ -428,7 +430,7 @@ tela_inicial()
 
 
 # Conteúdo para a Aba 3
-label3 = ctk.CTkLabel(tabview.tab("DEEP CLIP"), text="Conteúdo da DEEP CLIP")
+label3 = ctk.CTkLabel(tabview.tab("TESTIN AUDI"), text="Conteúdo da DEEP CLIP")
 label3.pack(padx=20, pady=20)
 
 # Conteúdo para a Aba 3
@@ -524,5 +526,158 @@ def text_into_audio():
     resultado_label.pack(pady=10)
 
 text_into_audio()
+def texto_audio_file():
+    # Lista de vozes disponíveis por idioma
+    VOZES = {
+        'pt-BR': ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural'],
+        'en-US': ['en-US-AriaNeural', 'en-US-GuyNeural', 'en-US-JennyNeural'],
+        'es-ES': ['es-ES-AlvaroNeural', 'es-ES-ElviraNeural', 'es-ES-LuciaNeural'],
+        'fr-FR': ['fr-FR-DeniseNeural', 'fr-FR-HenriNeural', 'fr-FR-CelesteNeural'],
+        'de-DE': ['de-DE-KatjaNeural', 'de-DE-ConradNeural'],
+        'it-IT': ['it-IT-ElsaNeural', 'it-IT-DanteNeural']
+    }
 
+    VOZ = ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural',
+        'en-US-AriaNeural', 'en-US-GuyNeural', 'en-US-JennyNeural',
+        'es-ES-AlvaroNeural', 'es-ES-ElviraNeural', 'es-ES-LuciaNeural',
+        'fr-FR-DeniseNeural', 'fr-FR-HenriNeural', 'fr-FR-CelesteNeural',
+        'de-DE-KatjaNeural', 'de-DE-ConradNeural',
+        'it-IT-ElsaNeural', 'it-IT-DanteNeural']
+
+    # Função para extrair texto de um arquivo PDF
+    def extrair_texto_pdf(caminho_pdf):
+        texto_extraido = ""
+        try:
+            with pdfplumber.open(caminho_pdf) as pdf:
+                for pagina in pdf.pages:
+                    texto_extraido += pagina.extract_text() or ""
+        except Exception as e:
+            print(f"Erro ao ler o PDF: {e}")
+        return texto_extraido
+
+    # Função para extrair texto de um arquivo Word (DOCX)
+    def extrair_texto_docx(caminho_docx):
+        texto_extraido = ""
+        try:
+            doc = Document(caminho_docx)
+            for paragrafo in doc.paragraphs:
+                texto_extraido += paragrafo.text + "\n"
+        except Exception as e:
+            print(f"Erro ao ler o arquivo DOCX: {e}")
+        return texto_extraido
+
+    # Função para extrair texto de arquivos de texto (.txt)
+    def extrair_texto_txt(caminho_txt):
+        texto_extraido = ""
+        try:
+            with open(caminho_txt, "r", encoding="utf-8") as file:
+                texto_extraido = file.read()
+        except Exception as e:
+            print(f"Erro ao ler o arquivo TXT: {e}")
+        return texto_extraido
+
+    # Função para selecionar o arquivo de entrada
+    def selecionar_arquivo():
+        caminho_arquivo = filedialog.askopenfilename(title="Selecione um arquivo", filetypes=[("Arquivos PDF", "*.pdf"), ("Arquivos Word", "*.docx"), ("Arquivos Texto", "*.txt")])
+        if caminho_arquivo:
+            caminho_arquivo_input.delete(0, ctk.END)
+            caminho_arquivo_input.insert(0, caminho_arquivo)
+
+    # Função para converter texto em áudio e salvar no formato escolhido
+    async def texto_para_audio(texto, idioma, voz, formato="wav", arquivo_output="audio_gerado"):
+        try:
+            # Verificar se a voz escolhida existe no idioma
+            if voz not in VOZES.get(idioma, []):
+                raise ValueError(f"A voz '{voz}' não está disponível para o idioma {idioma}.")
+            
+            # Inicializar o cliente de TTS com a voz escolhida
+            communicate = edge_tts.Communicate(texto, voice=voz)
+
+            # Definir o caminho para o arquivo de saída com a extensão
+            caminho_arquivo = f"{arquivo_output}.{formato}"
+            
+            # Gerar e salvar o áudio
+            await communicate.save(caminho_arquivo)
+            print(f"Áudio gerado com sucesso! Salvo como: {caminho_arquivo}")
+            return caminho_arquivo
+        
+        except Exception as e:
+            print(f"Erro ao gerar áudio: {e}")
+            return None
+
+    # Função para o botão de conversão de texto para áudio
+    async def gerar_audio():
+        caminho_arquivo = caminho_arquivo_input.get()  # Caminho do arquivo
+        idioma = idioma_combobox.get()
+        voz = voz_combobox.get()
+        formato = formato_combobox.get()
+        nome_arquivo = nome_arquivo_input.get()  # Nome do arquivo
+        
+        if nome_arquivo == "":
+            nome_arquivo = "audio_gerado"  # Nome padrão se o campo estiver vazio
+        
+        if caminho_arquivo:
+            # Determinar a extensão do arquivo e extrair o texto
+            extensao = os.path.splitext(caminho_arquivo)[1].lower()
+            if extensao == ".pdf":
+                texto = extrair_texto_pdf(caminho_arquivo)
+            elif extensao == ".docx":
+                texto = extrair_texto_docx(caminho_arquivo)
+            elif extensao == ".txt":
+                texto = extrair_texto_txt(caminho_arquivo)
+            else:
+                resultado_label.configure(text="Formato de arquivo não suportado.")
+                return
+            
+            if texto:
+                caminho_arquivo_audio = await texto_para_audio(texto, idioma, voz, formato, nome_arquivo)
+                if caminho_arquivo_audio:
+                    resultado_label.configure(text=f"Áudio gerado com sucesso! Salvo como: {caminho_arquivo_audio}")
+                else:
+                    resultado_label.configure(text="Erro ao gerar o áudio.")
+            else:
+                resultado_label.configure(text="Não foi possível extrair texto do arquivo.")
+        else:
+            resultado_label.configure(text="Por favor, insira o caminho do arquivo.")
+
+
+    # Campo para o caminho do arquivo
+    caminho_arquivo_label = ctk.CTkLabel(tabview.tab("TESTIN AUDI"), text="Caminho do arquivo:")
+    caminho_arquivo_label.pack(pady=5)
+    caminho_arquivo_input = ctk.CTkEntry(tabview.tab("TESTIN AUDI"), width=400, placeholder_text="Digite o caminho ou selecione o arquivo")
+    caminho_arquivo_input.pack(pady=10)
+
+    # Botão para selecionar o arquivo
+    selecionar_button = ctk.CTkButton(tabview.tab("TESTIN AUDI"), text="Selecionar Arquivo", command=selecionar_arquivo)
+    selecionar_button.pack(pady=10)
+
+    # Combobox para idioma
+    idioma_combobox = ctk.CTkComboBox(tabview.tab("TESTIN AUDI"), values=list(VOZES.keys()), width=200)
+    idioma_combobox.set('pt-BR')  # Valor padrão
+    idioma_combobox.pack(pady=10)
+
+    # Combobox para voz
+    voz_combobox = ctk.CTkComboBox(tabview.tab("TESTIN AUDI"), values=list(VOZ), width=200)
+    voz_combobox.pack(pady=10)
+
+    # Combobox para formato
+    formato_combobox = ctk.CTkComboBox(tabview.tab("TESTIN AUDI"), values=["wav", "mp3"], width=200)
+    formato_combobox.set("wav")  # Valor padrão
+    formato_combobox.pack(pady=10)
+
+    # Campo para o nome do arquivo de saída
+    nome_arquivo_label = ctk.CTkLabel(tabview.tab("TESTIN AUDI"), text="Nome do arquivo de áudio:")
+    nome_arquivo_label.pack(pady=5)
+    nome_arquivo_input = ctk.CTkEntry(tabview.tab("TESTIN AUDI"), width=400, placeholder_text="Digite o nome do arquivo de áudio")
+    nome_arquivo_input.pack(pady=10)
+
+    # Botão para gerar o áudio
+    gerar_button = ctk.CTkButton(tabview.tab("TESTIN AUDI"), text="Gerar Áudio", command=lambda: asyncio.run(gerar_audio()))
+    gerar_button.pack(pady=20)
+
+    # Label para exibir o resultado
+    resultado_label = ctk.CTkLabel(tabview.tab("TESTIN AUDI"), text="", width=400)
+    resultado_label.pack(pady=10)
+
+texto_audio_file()
 janela.mainloop()
