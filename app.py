@@ -8,6 +8,9 @@ import os
 from datetime import datetime
 from tkinter.filedialog import askdirectory, askopenfilename
 from moviepy import VideoFileClip, clips_array
+import edge_tts
+import asyncio
+
 
 # Configuração da janela principal
 ctk.set_appearance_mode("light")  # Modo claro
@@ -22,14 +25,13 @@ tabview = ctk.CTkTabview(janela)
 tabview.pack(padx=20, pady=20, fill="both", expand=True)
 
 # Adicionando abas
-tabview.add("MIXCLIP")
-tabview.add("BAIXCLIPS")
-tabview.add("Aba 3")
-
-
+tabview.add("MIX CLIP")
+tabview.add("BAIX CLIP")
+tabview.add("DEEP CLIP")
+tabview.add("TEXT AUDI")
 
 def clipmix():
-    quadro_menu = ctk.CTkFrame(tabview.tab("MIXCLIP"))
+    quadro_menu = ctk.CTkFrame(tabview.tab("MIX CLIP"))
     quadro_menu.pack()
     opicoes = ctk.CTkLabel(quadro_menu, text=(
         '1 - CORTAR OS VIDEOS\n'
@@ -40,7 +42,7 @@ def clipmix():
     ), font=("Arial", 17))
     opicoes.pack(pady=10)
 
-    win = ctk.CTkFrame(tabview.tab("MIXCLIP"), fg_color="transparent")
+    win = ctk.CTkFrame(tabview.tab("MIX CLIP"), fg_color="transparent")
     win.pack()
 
     def limpar_interface():
@@ -245,13 +247,6 @@ def clipmix():
 
 clipmix()
 
-
-
-
-
-
-
-
     # Funções para baixar vídeos
 def baixar_video_youtube():
         url = entry_url_youtube.get()
@@ -408,12 +403,14 @@ def criar_interface_tiktok():
     # Função principal para a tela inicial com botões
 def tela_inicial():
        
-        root = ctk.CTkFrame(tabview.tab("BAIXCLIPS"))
+        root = ctk.CTkFrame(tabview.tab("BAIX CLIP"))
         root.pack()
 
         # Título
-        label_titulo = ctk.CTkLabel(root, text="Escolha a plataforma para baixar o vídeo", font=("Arial", 20))
-        label_titulo.pack(pady=20)
+        label_titulo = ctk.CTkLabel(root, text="Escolha a plataforma", font=("Arial", 20))
+        label_titulo.pack()
+        label_titulo2 = ctk.CTkLabel(root, text="para baixar o vídeo", font=("Arial", 20))
+        label_titulo2.pack()
 
         # Botões para abrir as interfaces
         botao_youtube = ctk.CTkButton(root, text="YouTube", command=criar_interface_youtube)
@@ -425,19 +422,107 @@ def tela_inicial():
         botao_tiktok = ctk.CTkButton(root, text="TikTok", command=criar_interface_tiktok)
         botao_tiktok.pack(pady=10)
 
-      
-
+# Chamar a função principal para iniciar o aplicativo
 tela_inicial()
-    # Chamar a função principal para iniciar o aplicativo
+
 
 
 # Conteúdo para a Aba 3
-label3 = ctk.CTkLabel(tabview.tab("Aba 3"), text="Conteúdo da Aba 3")
+label3 = ctk.CTkLabel(tabview.tab("DEEP CLIP"), text="Conteúdo da DEEP CLIP")
 label3.pack(padx=20, pady=20)
 
+# Conteúdo para a Aba 3
+label3 = ctk.CTkLabel(tabview.tab("TEXT AUDI"), text="Conteúdo da TEXT AUDI")
+label3.pack(padx=20, pady=20)
+
+def text_into_audio():
+    # Lista de vozes disponíveis
+    VOZES = {
+        'pt-BR': ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural'],
+        'en-US': ['en-US-AriaNeural', 'en-US-GuyNeural', 'en-US-JennyNeural'],
+        'es-ES': ['es-ES-AlvaroNeural', 'es-ES-ElviraNeural', 'es-ES-LuciaNeural'],
+        'fr-FR': ['fr-FR-DeniseNeural', 'fr-FR-HenriNeural', 'fr-FR-CelesteNeural'],
+        'de-DE': ['de-DE-KatjaNeural', 'de-DE-ConradNeural'],
+        'it-IT': ['it-IT-ElsaNeural', 'it-IT-DanteNeural']
+    }
+
+    VOZ = ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural',
+        'en-US-AriaNeural', 'en-US-GuyNeural', 'en-US-JennyNeural',
+        'es-ES-AlvaroNeural', 'es-ES-ElviraNeural', 'es-ES-LuciaNeural',
+        'fr-FR-DeniseNeural', 'fr-FR-HenriNeural', 'fr-FR-CelesteNeural',
+        'de-DE-KatjaNeural', 'de-DE-ConradNeural',
+        'it-IT-ElsaNeural', 'it-IT-DanteNeural']
+
+    # Função para converter texto em áudio e salvar no formato escolhido
+    async def texto_para_audio(texto, idioma, voz, formato="wav", arquivo_output="audio_gerado"):
+        try:
+            # Verificar se a voz escolhida existe no idioma
+            if voz not in VOZES.get(idioma, []):
+                raise ValueError(f"A voz '{voz}' não está disponível para o idioma {idioma}.")
+            
+            # Inicializar o cliente de TTS com a voz escolhida
+            communicate = edge_tts.Communicate(texto, voice=voz)
+
+            # Definir o caminho para o arquivo de saída com a extensão
+            caminho_arquivo = f"{arquivo_output}.{formato}"
+            
+            # Gerar e salvar o áudio
+            await communicate.save(caminho_arquivo)
+            print(f"Áudio gerado com sucesso! Salvo como: {caminho_arquivo}")
+        
+        except Exception as e:
+            print(f"Erro ao gerar áudio: {e}")
+
+    # Função para o botão de conversão de texto para áudio
+    async def gerar_audio():
+        texto = texto_input.get()
+        idioma = idioma_combobox.get()
+        voz = voz_combobox.get()
+        formato = formato_combobox.get()
+        nome_arquivo = nome_arquivo_input.get()  # Nome do arquivo
+        
+        if nome_arquivo == "":
+            nome_arquivo = "audio_gerado"  # Nome padrão se o campo estiver vazio
+        
+        if texto:
+            await texto_para_audio(texto, idioma, voz, formato, nome_arquivo)
+            resultado_label.configure(text=f"Áudio gerado com sucesso! Salvo como: {nome_arquivo}.{formato}")
+        else:
+            resultado_label.configure(text="Por favor, insira um texto.")
 
 
 
 
+    # Campo para texto
+    texto_input = ctk.CTkEntry(tabview.tab("TEXT AUDI"), width=500, height=40, placeholder_text="Digite o texto que deseja converter...")
+    texto_input.pack(pady=10)
+
+    # Combobox para idioma
+    idioma_combobox = ctk.CTkComboBox(tabview.tab("TEXT AUDI"), values=list(VOZES.keys()), width=200)
+    idioma_combobox.set('pt-BR')  # Valor padrão
+    idioma_combobox.pack(pady=10)
+
+    # Combobox para voz
+    voz_combobox = ctk.CTkComboBox(tabview.tab("TEXT AUDI"), values=list(VOZ), width=200)
+    voz_combobox.pack(pady=10)
+
+    # Combobox para formato
+    formato_combobox = ctk.CTkComboBox(tabview.tab("TEXT AUDI"), values=["wav", "mp3"], width=200)
+    formato_combobox.set("wav")  # Valor padrão
+    formato_combobox.pack(pady=10)
+
+    # Campo para o nome do arquivo de áudio
+    nome_arquivo_input = ctk.CTkEntry(tabview.tab("TEXT AUDI"), width=500, height=40, placeholder_text="Digite o nome do arquivo (sem a extensão)...")
+    nome_arquivo_input.pack(pady=10)
+
+    # Botão para gerar o áudio
+    gerar_button = ctk.CTkButton(tabview.tab("TEXT AUDI"), text="Gerar Áudio", command=lambda: asyncio.run(gerar_audio()))
+    gerar_button.pack(pady=20)
+
+    # Label para mostrar resultado ou erro
+    resultado_label = ctk.CTkLabel(tabview.tab("TEXT AUDI"), text="", width=400)
+    resultado_label.pack(pady=10)
+
+text_into_audio()
 
 janela.mainloop()
