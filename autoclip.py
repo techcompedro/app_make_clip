@@ -1,12 +1,16 @@
+from PIL import Image
+import moviepy as mp
 import os
-from moviepy import VideoFileClip, clips_array 
-from datetime import datetime
-from moviepy import VideoFileClip, clips_array
 import customtkinter as ctk
-from tkinter import filedialog
+import autoclip as ac
+import yt_dlp
+from tkinter import messagebox
+from tiktok_downloader import snaptik
 from tkinter.filedialog import askdirectory
 from moviepy import VideoFileClip, clips_array
-import os
+
+from datetime import datetime
+import customtkinter as ctk
 from datetime import datetime
 def cut_clip(caminho_video, pasta_saida, intervalo):
     # Verifica se o arquivo existe
@@ -188,5 +192,129 @@ def delete_file(directory, choice):
         return num_videos_apagados
     except Exception as e:
         print(f"Erro: {e}")
+
+
+
+def create_frame_with_video(image_path, video_path, output_path, video_size=(1280, 720)):
+    # Abrir a imagem base
+    base_image = Image.open(image_path).resize((video_size[1], video_size[0]))
+
+    # Salvar a imagem redimensionada temporariamente
+    temp_image_path = "temp_frame.png"
+    base_image.save(temp_image_path)
+
+    # Definir a área central onde o vídeo ficará (12% menor que a moldura)
+    video_width = int(video_size[1] * 0.88)  # 88% da largura da moldura
+    video_height = int(video_size[0] * 0.88)  # 88% da altura da moldura
+    video_x = (video_size[1] - video_width) // 2
+    video_y = (video_size[0] - video_height) // 2
+
+    # Carregar e redimensionar o vídeo
+    video = mp.VideoFileClip(video_path).resized((video_width, video_height))
+    
+    # Criar uma imagem de fundo com a moldura
+    background = mp.ImageClip(temp_image_path).with_duration(video.duration)  # A duração será ajustada ao vídeo
+
+    # Posicionar o vídeo sobre a moldura
+    final_video = mp.CompositeVideoClip([
+        background,  # Moldura de fundo
+        video.with_position((video_x, video_y))  # Vídeo centralizado
+    ])
+
+    # Exportar o vídeo final com aceleração
+    final_video.write_videofile(output_path, codec="libx264", fps=24)
+
+    # Remover o arquivo temporário
+    os.remove(temp_image_path)
+
+def process_videos_in_folder(image_path, videos_folder, output_folder, video_size=(1280, 720)):
+    # Criar a pasta de saída, se não existir
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Iterar sobre todos os arquivos na pasta de vídeos
+    for video_file in os.listdir(videos_folder):
+        if video_file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+            video_path = os.path.join(videos_folder, video_file)
+            output_path = os.path.join(output_folder, f"framed_{video_file}")
+
+            # Processar o vídeo com a moldura
+            print(f"Processando: {video_file}")
+            create_frame_with_video(image_path, video_path, output_path, video_size)
+
+
+    # Funções para baixar vídeos
+
+
+
+def baixar_video_youtube(url, caminho_destino):
+
+        if not url or not caminho_destino:
+            messagebox.showerror("Erro", "A URL ou o Caminho de Destino não podem estar vazios!")
+            return
+
+        try:
+            ydl_opts = {
+                'ffmpeg_location': r'C:\ffmpeg\bin\ffmpeg.exe',  # Caminho para o ffmpeg
+                'outtmpl': f'{caminho_destino}/%(title)s.%(ext)s',
+                'format': 'bestvideo+bestaudio/best',
+                'merge_output_format': 'mp4',
+                'postprocessors': [
+                    {
+                        'key': 'FFmpegVideoConvertor',
+                        'preferedformat': 'mp4',
+                    }
+                ],
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                messagebox.showinfo("Iniciado", f"Iniciando o download do vídeo: {url}")
+                ydl.download([url])
+                messagebox.showinfo("Concluído", "Download concluído com sucesso!")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao baixar o vídeo: {e}")
+
+def baixar_video_instagram(url, caminho_destino):
+
+        if not url or not caminho_destino:
+            messagebox.showerror("Erro", "A URL ou o Caminho de Destino não podem estar vazios!")
+            return
+
+        try:
+            ydl_opts = {
+                'ffmpeg_location': r'C:\ffmpeg\bin\ffmpeg.exe',
+                'outtmpl': f'{caminho_destino}/%(title)s.%(ext)s',
+                'format': 'bestvideo+bestaudio/best',
+                'merge_output_format': 'mp4',
+                'postprocessors': [
+                    {
+                        'key': 'FFmpegVideoConvertor',
+                        'preferedformat': 'mp4',
+                    }
+                ],
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                messagebox.showinfo("Iniciado", f"Iniciando o download do vídeo: {url}")
+                ydl.download([url])
+                messagebox.showinfo("Concluído", "Download concluído com sucesso!")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao baixar o vídeo: {e}")
+
+def baixar_video_tiktok(url, pasta_destino):
+
+        if not url or not pasta_destino:
+            messagebox.showerror("Erro", "A URL ou o Caminho de Destino não podem estar vazios!")
+            return
+        # Certifique-se de que a pasta existe
+        if not os.path.exists(pasta_destino):
+            os.makedirs(pasta_destino)
+        # Baixando o vídeo
+        d = snaptik(url)
+        messagebox.showinfo("Iniciado", f"Iniciando o download do vídeo: {url}")
+        # Nome do arquivo
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Formato: AAAAMMDD_HHMMSS
+        nome_arquivo = f'video_{timestamp}.mp4'
+        # Caminho completo para salvar o vídeo
+        caminho_completo = os.path.join(pasta_destino, nome_arquivo)
+        d[0].download(caminho_completo)
+        messagebox.showinfo("Concluído", f"Download concluído com sucesso! Vídeo salvo em: {caminho_completo}")
 
 

@@ -1,11 +1,7 @@
 import customtkinter as ctk
 import autoclip as ac
 import threading
-import yt_dlp
-from tkinter import messagebox
-from tiktok_downloader import snaptik
 import os
-from datetime import datetime
 from tkinter.filedialog import askdirectory, askopenfilename
 from moviepy import VideoFileClip, clips_array
 import edge_tts
@@ -30,7 +26,7 @@ tabview.pack(padx=20, pady=20, fill="both", expand=True)
 tabview.add("MIX CLIP")
 tabview.add("BAIX CLIP")
 tabview.add("AUDI CLIP")
-tabview.add("TEXT AUDI")
+tabview.add("DEEP CLIP")
 
 def clipmix():
     quadro_menu = ctk.CTkFrame(tabview.tab("MIX CLIP"))
@@ -249,83 +245,7 @@ def clipmix():
 
 clipmix()
 
-    # Funções para baixar vídeos
-def baixar_video_youtube():
-        url = entry_url_youtube.get()
-        caminho_destino = entry_destino_youtube.get()
-
-        if not url or not caminho_destino:
-            messagebox.showerror("Erro", "A URL ou o Caminho de Destino não podem estar vazios!")
-            return
-
-        try:
-            ydl_opts = {
-                'ffmpeg_location': r'C:\ffmpeg\bin\ffmpeg.exe',  # Caminho para o ffmpeg
-                'outtmpl': f'{caminho_destino}/%(title)s.%(ext)s',
-                'format': 'bestvideo+bestaudio/best',
-                'merge_output_format': 'mp4',
-                'postprocessors': [
-                    {
-                        'key': 'FFmpegVideoConvertor',
-                        'preferedformat': 'mp4',
-                    }
-                ],
-            }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                messagebox.showinfo("Iniciado", f"Iniciando o download do vídeo: {url}")
-                ydl.download([url])
-                messagebox.showinfo("Concluído", "Download concluído com sucesso!")
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao baixar o vídeo: {e}")
-def baixar_video_instagram():
-        url = entry_url_instagram.get()
-        caminho_destino = entry_destino_instagram.get()
-
-        if not url or not caminho_destino:
-            messagebox.showerror("Erro", "A URL ou o Caminho de Destino não podem estar vazios!")
-            return
-
-        try:
-            ydl_opts = {
-                'ffmpeg_location': r'C:\ffmpeg\bin\ffmpeg.exe',
-                'outtmpl': f'{caminho_destino}/%(title)s.%(ext)s',
-                'format': 'bestvideo+bestaudio/best',
-                'merge_output_format': 'mp4',
-                'postprocessors': [
-                    {
-                        'key': 'FFmpegVideoConvertor',
-                        'preferedformat': 'mp4',
-                    }
-                ],
-            }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                messagebox.showinfo("Iniciado", f"Iniciando o download do vídeo: {url}")
-                ydl.download([url])
-                messagebox.showinfo("Concluído", "Download concluído com sucesso!")
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao baixar o vídeo: {e}")
-def baixar_video_tiktok():
-        url = entry_url_tiktok.get()
-        pasta_destino = entry_destino_tiktok.get()
-        if not url or not pasta_destino:
-            messagebox.showerror("Erro", "A URL ou o Caminho de Destino não podem estar vazios!")
-            return
-        # Certifique-se de que a pasta existe
-        if not os.path.exists(pasta_destino):
-            os.makedirs(pasta_destino)
-        # Baixando o vídeo
-        d = snaptik(url)
-        messagebox.showinfo("Iniciado", f"Iniciando o download do vídeo: {url}")
-        # Nome do arquivo
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')  # Formato: AAAAMMDD_HHMMSS
-        nome_arquivo = f'video_{timestamp}.mp4'
-        # Caminho completo para salvar o vídeo
-        caminho_completo = os.path.join(pasta_destino, nome_arquivo)
-        d[0].download(caminho_completo)
-        messagebox.showinfo("Concluído", f"Download concluído com sucesso! Vídeo salvo em: {caminho_completo}")
-    
-     
-
+# Funções para baixar vídeos
 def tela_inicial():
         root = ctk.CTkFrame(tabview.tab("BAIX CLIP"))
         root.pack()
@@ -336,12 +256,17 @@ def tela_inicial():
             for widget in frame.winfo_children():
                 widget.pack_forget()
         
+        def selecionar_pasta(entry_widget):
+            pasta_selecionada = askdirectory()
+            if pasta_selecionada:
+                entry_widget.delete(0, 'end')
+                entry_widget.insert(0, pasta_selecionada)
+                
         def btn_click_baixar(opc):
             limpar_interface()
             estilo = {"width": 300, "height": 30}
             
             if opc == 1:
-                        global entry_url_youtube, entry_destino_youtube
 
                         label_titulo = ctk.CTkLabel(frame, text="Baixar Vídeo do YouTube", font=("Arial", 18))
                         label_titulo.pack(pady=10)
@@ -355,12 +280,13 @@ def tela_inicial():
                         label_destino_youtube.pack(pady=5)
                         entry_destino_youtube = ctk.CTkEntry(frame, placeholder_text="Caminho de destino", **estilo)
                         entry_destino_youtube.pack(pady=5)
-
-                        botao_download_youtube = ctk.CTkButton(frame, text="Baixar YouTube",  **botao_estilo,command=baixar_video_youtube)
-                        botao_download_youtube.pack(pady=20)
+                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: selecionar_pasta(entry_destino_youtube)).pack(pady=5)
+                        def baixar_video_y():
+                            ac.baixar_video_youtube(entry_url_youtube.get(), entry_destino_youtube.get())
+                        
+                        ctk.CTkButton(frame, text="Baixar YouTube",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_y).start()).pack(pady=20)
 
             elif opc == 2:
-                        global entry_url_instagram, entry_destino_instagram
 
                         label_titulo_instagram = ctk.CTkLabel(frame, text="Baixar Vídeo do Instagram", font=("Arial", 18))
                         label_titulo_instagram.pack(pady=10)
@@ -374,13 +300,14 @@ def tela_inicial():
                         label_destino_instagram.pack(pady=5)
                         entry_destino_instagram = ctk.CTkEntry(frame, placeholder_text="Caminho de destino", **estilo)
                         entry_destino_instagram.pack(pady=5)
+                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: selecionar_pasta(entry_destino_instagram)).pack(pady=5)
 
-                        botao_download_instagram = ctk.CTkButton(frame, text="Baixar Instagram",  **botao_estilo,command=baixar_video_instagram)
-                        botao_download_instagram.pack(pady=20)
-
+                        def baixar_video_inst():
+                            ac.baixar_video_instagram(entry_url_instagram.get(), entry_destino_instagram.get())
+                        
+                        ctk.CTkButton(frame, text="Baixar Instagram",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_inst).start()).pack(pady=20)
+                        
             elif opc == 3:
-                        global entry_url_tiktok, entry_destino_tiktok
-
                         label_titulo_tiktok = ctk.CTkLabel(frame, text="Baixar Vídeo do TikTok", font=("Arial", 18))
                         label_titulo_tiktok.pack(pady=10)
 
@@ -391,13 +318,18 @@ def tela_inicial():
 
                         label_destino_tiktok = ctk.CTkLabel(frame, text="Caminho de destino:")
                         label_destino_tiktok.pack(pady=5)
+                        
                         entry_destino_tiktok = ctk.CTkEntry(frame, placeholder_text="Caminho de destino", **estilo)
                         entry_destino_tiktok.pack(pady=5)
+                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: selecionar_pasta(entry_destino_tiktok)).pack(pady=5)
+                        
+                        def baixar_video_tik():
+                            ac.baixar_video_tiktok(entry_url_tiktok.get(), entry_destino_tiktok.get())
+                        
+                        ctk.CTkButton(frame, text="Baixar TikTok",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_tik).start()).pack(pady=20)
+                        
 
-                        botao_download_tiktok = ctk.CTkButton(frame, text="Baixar TikTok",  **botao_estilo,command=baixar_video_tiktok)
-                        botao_download_tiktok.pack(pady=20)
-
-        botao_esti = {"width": 50, "height": 50, "font": ("Arial", 14)}
+        botao_esti = {"width": 20, "height": 35, "font": ("Arial", 14)}
         # Título
         label_titulo = ctk.CTkLabel(root, text="Escolha a plataforma", font=("Arial", 20))
         label_titulo.pack()
@@ -413,7 +345,9 @@ def tela_inicial():
 
         botao_tiktok = ctk.CTkButton(root, text="TikTok",  **botao_esti,command=lambda: btn_click_baixar(3))
         botao_tiktok.pack(pady=10)
+
 tela_inicial()
+
 
 def aba_audio():
     root = ctk.CTkFrame(tabview.tab("AUDI CLIP"))
@@ -691,5 +625,51 @@ def aba_audio():
     texto_audio.pack(pady=10)
     
 aba_audio()
+
+
+def img_fundo_video():
+    root = ctk.CTkFrame(tabview.tab("DEEP CLIP"))
+    root.pack()
+    frame = ctk.CTkFrame(tabview.tab("DEEP CLIP"), fg_color="transparent")
+    frame.pack()
+    estilo = {"width": 300, "height": 30}
+    def selecionar_img(entry_widget):
+        arquivo_selecionado = askopenfilename(filetypes=[("Vídeos", "*.png;*")])
+        if arquivo_selecionado:
+            entry_widget.delete(0, 'end')
+            entry_widget.insert(0, arquivo_selecionado)
+    def selecionar_pasta(entry_widget):
+        pasta_selecionada = askdirectory()
+        if pasta_selecionada:
+            entry_widget.delete(0, 'end')
+            entry_widget.insert(0, pasta_selecionada)
+        
+    def mostrar_mensagem(texto, cor="green"):
+        mensagem = ctk.CTkLabel(frame, text=texto, text_color=cor)
+        mensagem.pack(pady=10)
+    
+    img_caminho = ctk.CTkEntry(frame , placeholder_text="Caminho para a imagem", **estilo)
+    img_caminho.pack(pady=5)
+    ctk.CTkButton(frame , text="Selecionar imagem", command=lambda: selecionar_img(img_caminho)).pack(pady=5)
+    
+    caminho = ctk.CTkEntry(frame , placeholder_text="Caminho da pasta com os videos", **estilo)
+    caminho.pack(pady=5)
+    ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+    
+    pasta_saida = ctk.CTkEntry(frame , placeholder_text="Pasta para salvar", **estilo)
+    pasta_saida.pack(pady=5)
+    ctk.CTkButton(frame , text="Selecionar Pasta", command=lambda: selecionar_pasta(pasta_saida)).pack(pady=5)
+
+    
+    def deep():
+        try:
+            mostrar_mensagem("junando o fundo da imagem com o  video...")
+            ac.process_videos_in_folder(img_caminho.get(), caminho.get(), pasta_saida.get())
+            mostrar_mensagem("junção concluída!")
+        except Exception as e:
+            mostrar_mensagem(f"Erro: {e}", "red")
+    ctk.CTkButton(frame , text="junta", command=lambda: threading.Thread(target=deep).start()).pack(pady=10)
+
+img_fundo_video()
 
 janela.mainloop()
