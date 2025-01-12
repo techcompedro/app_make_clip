@@ -2,7 +2,7 @@ import customtkinter as ctk
 import autoclip as ac
 import threading
 import os
-from tkinter.filedialog import askdirectory, askopenfilename
+from tkinter.filedialog import askdirectory
 from moviepy import VideoFileClip, clips_array
 import edge_tts
 import asyncio
@@ -37,7 +37,7 @@ def clipmix():
         '3 - CONTAR VIDEOS\n'
         '4 - APAGAR VIDEOS\n'
         '5 - JUNTAR OS VIDEOS'
-    ), font=("Arial", 17))
+    ))
     opicoes.pack(pady=10)
 
     win = ctk.CTkFrame(tabview.tab("MIX CLIP"), fg_color="transparent")
@@ -50,19 +50,7 @@ def clipmix():
     def mostrar_mensagem(texto, cor="green"):
         mensagem = ctk.CTkLabel(win, text=texto, text_color=cor)
         mensagem.pack(pady=10)
-    
-    def selecionar_video(entry_widget):
-        arquivo_selecionado = askopenfilename(filetypes=[("Vídeos", "*.mp4;*.avi;*.mkv")])
-        if arquivo_selecionado:
-            entry_widget.delete(0, 'end')
-            entry_widget.insert(0, arquivo_selecionado)
 
-    def selecionar_pasta(entry_widget):
-        pasta_selecionada = askdirectory()
-        if pasta_selecionada:
-            entry_widget.delete(0, 'end')
-            entry_widget.insert(0, pasta_selecionada)
-    
     def btn_click(opcao):
         limpar_interface()
         estilo = {"width": 300, "height": 30}
@@ -71,10 +59,10 @@ def clipmix():
             ctk.CTkLabel(win, text="Cortar Vídeo:").pack(pady=(10, 5))
             caminho = ctk.CTkEntry(win, placeholder_text="Caminho do vídeo", **estilo)
             caminho.pack(pady=5)
-            ctk.CTkButton(win, text="Selecionar Vídeo", command=lambda: selecionar_video(caminho)).pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Vídeo", command=lambda: ac.selecionar_video(caminho)).pack(pady=5)
             pasta_saida = ctk.CTkEntry(win, placeholder_text="Pasta para salvar", **estilo)
             pasta_saida.pack(pady=5)
-            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(pasta_saida)).pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: ac.selecionar_pasta(pasta_saida)).pack(pady=5)
             intervalo = ctk.CTkEntry(win, placeholder_text="Intervalo (segundos)", **estilo)
             intervalo.pack(pady=5)
             def cortar_video():
@@ -91,7 +79,7 @@ def clipmix():
             ctk.CTkLabel(win, text="Renomear Vídeos:").pack(pady=(10, 5))
             caminho = ctk.CTkEntry(win, placeholder_text="Caminho da pasta", **estilo)
             caminho.pack(pady=5)
-            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: ac.selecionar_pasta(caminho)).pack(pady=5)
             novo_nome = ctk.CTkEntry(win, placeholder_text="Novo nome base", **estilo)
             novo_nome.pack(pady=5)
 
@@ -108,7 +96,7 @@ def clipmix():
             ctk.CTkLabel(win, text="Contar Vídeos:").pack(pady=(10, 5))
             caminho = ctk.CTkEntry(win, placeholder_text="Caminho da pasta", **estilo)
             caminho.pack(pady=5)
-            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: ac.selecionar_pasta(caminho)).pack(pady=5)
 
             def contar_videos():
                 try:
@@ -123,7 +111,7 @@ def clipmix():
             ctk.CTkLabel(win, text="Apagar Vídeos:").pack(pady=(10, 5))
             caminho = ctk.CTkEntry(win, placeholder_text="Caminho da pasta", **estilo)
             caminho.pack(pady=5)
-            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+            ctk.CTkButton(win, text="Selecionar Pasta", command=lambda: ac.selecionar_pasta(caminho)).pack(pady=5)
             numero = ctk.CTkEntry(win, placeholder_text="Quantidade", **estilo)
             numero.pack(pady=5)
 
@@ -255,13 +243,7 @@ def tela_inicial():
         def limpar_interface():
             for widget in frame.winfo_children():
                 widget.pack_forget()
-        
-        def selecionar_pasta(entry_widget):
-            pasta_selecionada = askdirectory()
-            if pasta_selecionada:
-                entry_widget.delete(0, 'end')
-                entry_widget.insert(0, pasta_selecionada)
-                
+
         def btn_click_baixar(opc):
             limpar_interface()
             estilo = {"width": 300, "height": 30}
@@ -280,9 +262,15 @@ def tela_inicial():
                         label_destino_youtube.pack(pady=5)
                         entry_destino_youtube = ctk.CTkEntry(frame, placeholder_text="Caminho de destino", **estilo)
                         entry_destino_youtube.pack(pady=5)
-                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: selecionar_pasta(entry_destino_youtube)).pack(pady=5)
+                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: ac.selecionar_pasta(entry_destino_youtube)).pack(pady=5)
                         def baixar_video_y():
-                            ac.baixar_video_youtube(entry_url_youtube.get(), entry_destino_youtube.get())
+                            try:
+                                ac.mostrar_mensagem("Baixando vídeo...")
+                                ac.baixar_video_youtube(entry_url_youtube.get(), entry_destino_youtube.get())
+                                ac.mostrar_mensagem("download concluído!")
+                            except Exception as e:
+                                ac.mostrar_mensagem(f"Erro: {e}", "red")
+                            
                         
                         ctk.CTkButton(frame, text="Baixar YouTube",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_y).start()).pack(pady=20)
 
@@ -300,10 +288,16 @@ def tela_inicial():
                         label_destino_instagram.pack(pady=5)
                         entry_destino_instagram = ctk.CTkEntry(frame, placeholder_text="Caminho de destino", **estilo)
                         entry_destino_instagram.pack(pady=5)
-                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: selecionar_pasta(entry_destino_instagram)).pack(pady=5)
+                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: ac.selecionar_pasta(entry_destino_instagram)).pack(pady=5)
 
                         def baixar_video_inst():
-                            ac.baixar_video_instagram(entry_url_instagram.get(), entry_destino_instagram.get())
+                            try:
+                                ac.mostrar_mensagem("Baixando vídeo...")
+                                ac.baixar_video_instagram(entry_url_instagram.get(), entry_destino_instagram.get())
+                                ac.mostrar_mensagem("download concluído!")
+                            except Exception as e:
+                                ac.mostrar_mensagem(f"Erro: {e}", "red")
+                           
                         
                         ctk.CTkButton(frame, text="Baixar Instagram",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_inst).start()).pack(pady=20)
                         
@@ -321,10 +315,16 @@ def tela_inicial():
                         
                         entry_destino_tiktok = ctk.CTkEntry(frame, placeholder_text="Caminho de destino", **estilo)
                         entry_destino_tiktok.pack(pady=5)
-                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: selecionar_pasta(entry_destino_tiktok)).pack(pady=5)
+                        ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: ac.selecionar_pasta(entry_destino_tiktok)).pack(pady=5)
                         
                         def baixar_video_tik():
-                            ac.baixar_video_tiktok(entry_url_tiktok.get(), entry_destino_tiktok.get())
+                            try:
+                                ac.mostrar_mensagem("Baixando vídeo...")
+                                ac.baixar_video_tiktok(entry_url_tiktok.get(), entry_destino_tiktok.get())
+                                ac.mostrar_mensagem("download concluído!")
+                            except Exception as e:
+                                ac.mostrar_mensagem(f"Erro: {e}", "red")
+                            
                         
                         ctk.CTkButton(frame, text="Baixar TikTok",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_tik).start()).pack(pady=20)
                         
@@ -363,7 +363,154 @@ def aba_audio():
         limpar_interface()
         estilo = {"width": 300, "height": 30}
         botao_estilo = {"width": 20, "height": 30, "font": ("Arial", 14)}
-        if opc == 2:
+        if opc == 1:
+            # Lista de vozes disponíveis por idioma
+            VOZES = {
+                'pt-BR': ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural'],
+                'en-US': ['en-US-AriaNeural', 'en-US-GuyNeural', 'en-US-JennyNeural'],
+                'es-ES': ['es-ES-AlvaroNeural', 'es-ES-ElviraNeural', 'es-ES-LuciaNeural'],
+                'fr-FR': ['fr-FR-DeniseNeural', 'fr-FR-HenriNeural', 'fr-FR-CelesteNeural'],
+                'de-DE': ['de-DE-KatjaNeural', 'de-DE-ConradNeural'],
+                'it-IT': ['it-IT-ElsaNeural', 'it-IT-DanteNeural']
+            }
+
+            VOZ = ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural',
+                'en-US-AriaNeural', 'en-US-GuyNeural', 'en-US-JennyNeural',
+                'es-ES-AlvaroNeural', 'es-ES-ElviraNeural', 'es-ES-LuciaNeural',
+                'fr-FR-DeniseNeural', 'fr-FR-HenriNeural', 'fr-FR-CelesteNeural',
+                'de-DE-KatjaNeural', 'de-DE-ConradNeural',
+                'it-IT-ElsaNeural', 'it-IT-DanteNeural']
+
+            # Função para extrair texto de um arquivo PDF
+            def extrair_texto_pdf(caminho_pdf):
+                texto_extraido = ""
+                try:
+                    with pdfplumber.open(caminho_pdf) as pdf:
+                        for pagina in pdf.pages:
+                            texto_extraido += pagina.extract_text() or ""
+                except Exception as e:
+                    print(f"Erro ao ler o PDF: {e}")
+                return texto_extraido
+
+            # Função para extrair texto de um arquivo Word (DOCX)
+            def extrair_texto_docx(caminho_docx):
+                texto_extraido = ""
+                try:
+                    doc = Document(caminho_docx)
+                    for paragrafo in doc.paragraphs:
+                        texto_extraido += paragrafo.text + "\n"
+                except Exception as e:
+                    print(f"Erro ao ler o arquivo DOCX: {e}")
+                return texto_extraido
+
+            # Função para extrair texto de arquivos de texto (.txt)
+            def extrair_texto_txt(caminho_txt):
+                texto_extraido = ""
+                try:
+                    with open(caminho_txt, "r", encoding="utf-8") as file:
+                        texto_extraido = file.read()
+                except Exception as e:
+                    print(f"Erro ao ler o arquivo TXT: {e}")
+                return texto_extraido
+
+            # Função para converter texto em áudio e salvar no formato escolhido
+            async def texto_para_audio(texto, idioma, voz, formato="wav", arquivo_output="audio_gerado"):
+                try:
+                    # Verificar se a voz escolhida existe no idioma
+                    if voz not in VOZES.get(idioma, []):
+                        raise ValueError(f"A voz '{voz}' não está disponível para o idioma {idioma}.")
+                    
+                    # Inicializar o cliente de TTS com a voz escolhida
+                    communicate = edge_tts.Communicate(texto, voice=voz)
+
+                    # Definir o caminho para o arquivo de saída com a extensão
+                    caminho_arquivo = f"{arquivo_output}.{formato}"
+                    
+                    # Gerar e salvar o áudio
+                    await communicate.save(caminho_arquivo)
+                    print(f"Áudio gerado com sucesso! Salvo como: {caminho_arquivo}")
+                    return caminho_arquivo
+                
+                except Exception as e:
+                    print(f"Erro ao gerar áudio: {e}")
+                    return None
+
+            # Função para o botão de conversão de texto para áudio
+            async def gerar_audio():
+                caminho_arquivo = caminho_arquivo_input.get()  # Caminho do arquivo
+                idioma = idioma_combobox.get()
+                voz = voz_combobox.get()
+                formato = formato_combobox.get()
+                nome_arquivo = nome_arquivo_input.get()  # Nome do arquivo
+                
+                if nome_arquivo == "":
+                    nome_arquivo = "audio_gerado"  # Nome padrão se o campo estiver vazio
+                
+                if caminho_arquivo:
+                    # Determinar a extensão do arquivo e extrair o texto
+                    extensao = os.path.splitext(caminho_arquivo)[1].lower()
+                    if extensao == ".pdf":
+                        texto = extrair_texto_pdf(caminho_arquivo)
+                    elif extensao == ".docx":
+                        texto = extrair_texto_docx(caminho_arquivo)
+                    elif extensao == ".txt":
+                        texto = extrair_texto_txt(caminho_arquivo)
+                    else:
+                        resultado_entry.configure(text="Formato de arquivo não suportado.")
+                        return
+                    
+                    if texto:
+                        caminho_arquivo_audio = await texto_para_audio(texto, idioma, voz, formato, nome_arquivo)
+                        if caminho_arquivo_audio:
+                            resultado_entry.configure(text=f"Áudio gerado com sucesso! Salvo como: {caminho_arquivo_audio}")
+                        else:
+                            resultado_entry.configure(text="Erro ao gerar o áudio.")
+                    else:
+                        resultado_entry.configure(text="Não foi possível extrair texto do arquivo.")
+                else:
+                    resultado_entry.configure(text="Por favor, insira o caminho do arquivo.")
+
+
+            # Campo para o caminho do arquivo
+            caminho_arquivo_label = ctk.CTkLabel(frame, text="converter arquivos em pdf para audio:")
+            caminho_arquivo_label.pack(pady=5)
+            
+            caminho_arquivo_input = ctk.CTkEntry(frame, **estilo, placeholder_text="Digite o caminho ou selecione o arquivo")
+            caminho_arquivo_input.pack(pady=10)
+
+            # Botão para selecionar o arquivo
+            selecionar_arquivo = ctk.CTkButton(frame, **botao_estilo,text="Selecionar Arquivo", command=lambda:ac.selecionar_arquivo(caminho_arquivo_input))
+            selecionar_arquivo.pack(pady=10)
+
+            # Combobox para idioma
+            idioma_combobox = ctk.CTkComboBox(frame, values=list(VOZES.keys()), width=200)
+            idioma_combobox.set('pt-BR')  # Valor padrão
+            idioma_combobox.pack(pady=10)
+
+            # Combobox para voz
+            voz_combobox = ctk.CTkComboBox(frame, values=list(VOZ), width=200)
+            voz_combobox.pack(pady=10)
+
+            # Combobox para formato
+            formato_combobox = ctk.CTkComboBox(frame, values=["wav", "mp3"], width=200)
+            formato_combobox.set("mp3")  # Valor padrão
+            formato_combobox.pack(pady=10)
+
+            # Campo para o nome do arquivo de saída
+            nome_arquivo_label = ctk.CTkLabel(frame, text="Nome do arquivo de áudio:")
+            nome_arquivo_label.pack(pady=5)
+            nome_arquivo_input = ctk.CTkEntry(frame, **estilo, placeholder_text="Digite o nome do arquivo de áudio")
+            nome_arquivo_input.pack(pady=10)
+
+            # Botão para gerar o áudio
+            gerar_button = ctk.CTkButton(frame, **botao_estilo,text="Gerar Áudio", command=lambda: asyncio.run(gerar_audio()))
+            gerar_button.pack(pady=20)
+
+            # Label para exibir o resultado
+            resultado_entry = ctk.CTkLabel(frame, text=".")
+            resultado_entry.pack()
+
+        elif opc == 2:
             # Lista de vozes disponíveis
             VOZES = {
                 'pt-BR': ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural'],
@@ -432,6 +579,9 @@ def aba_audio():
                     resultado_entry.insert(0, "Por favor, insira um texto válido.")
 
             # Componentes da interface
+            
+            label = ctk.CTkLabel(frame, text="Converter texto em audio:")
+            label.pack(pady=5)
             texto_input = ctk.CTkEntry(frame, **estilo, placeholder_text="Digite o texto que deseja converter...")
             texto_input.pack(pady=10)
 
@@ -452,222 +602,99 @@ def aba_audio():
             gerar_button = ctk.CTkButton(frame, **botao_estilo, text="Gerar Áudio", command=lambda: asyncio.run(gerar_audio()))
             gerar_button.pack(pady=20)
 
-            # Campo de entrada para exibir resultados
-            resultado_entry = ctk.CTkEntry(frame, **estilo)
-            resultado_entry.pack(pady=10)
 
-        elif opc == 1:
-            # Lista de vozes disponíveis por idioma
-            VOZES = {
-                'pt-BR': ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural'],
-                'en-US': ['en-US-AriaNeural', 'en-US-GuyNeural', 'en-US-JennyNeural'],
-                'es-ES': ['es-ES-AlvaroNeural', 'es-ES-ElviraNeural', 'es-ES-LuciaNeural'],
-                'fr-FR': ['fr-FR-DeniseNeural', 'fr-FR-HenriNeural', 'fr-FR-CelesteNeural'],
-                'de-DE': ['de-DE-KatjaNeural', 'de-DE-ConradNeural'],
-                'it-IT': ['it-IT-ElsaNeural', 'it-IT-DanteNeural']
-            }
+        # Função para abrir uma nova janela com o texto gerado
+        def abrir_nova_guia(texto_gerado):
+            nova_janela = ctk.CTkToplevel()
+            nova_janela.title("Texto Gerado")
+            nova_janela.geometry("500x500")
 
-            VOZ = ['pt-BR-AntonioNeural', 'pt-BR-FranciscaNeural', 'pt-BR-ValerioNeural',
-                'en-US-AriaNeural', 'en-US-GuyNeural', 'en-US-JennyNeural',
-                'es-ES-AlvaroNeural', 'es-ES-ElviraNeural', 'es-ES-LuciaNeural',
-                'fr-FR-DeniseNeural', 'fr-FR-HenriNeural', 'fr-FR-CelesteNeural',
-                'de-DE-KatjaNeural', 'de-DE-ConradNeural',
-                'it-IT-ElsaNeural', 'it-IT-DanteNeural']
+            label_texto = ctk.CTkLabel(nova_janela, text="Texto Gerado:", font=("Arial", 14, "bold"))
+            label_texto.pack(pady=10)
 
-            # Função para extrair texto de um arquivo PDF
-            def extrair_texto_pdf(caminho_pdf):
-                texto_extraido = ""
-                try:
-                    with pdfplumber.open(caminho_pdf) as pdf:
-                        for pagina in pdf.pages:
-                            texto_extraido += pagina.extract_text() or ""
-                except Exception as e:
-                    print(f"Erro ao ler o PDF: {e}")
-                return texto_extraido
+            texto_box = ctk.CTkTextbox(nova_janela, width=380, height=200)
+            texto_box.insert("1.0", texto_gerado)
+            texto_box.configure(state="disabled")  # Desativa edição
+            texto_box.pack(padx=10, pady=10)
 
-            # Função para extrair texto de um arquivo Word (DOCX)
-            def extrair_texto_docx(caminho_docx):
-                texto_extraido = ""
-                try:
-                    doc = Document(caminho_docx)
-                    for paragrafo in doc.paragraphs:
-                        texto_extraido += paragrafo.text + "\n"
-                except Exception as e:
-                    print(f"Erro ao ler o arquivo DOCX: {e}")
-                return texto_extraido
+            botao_fechar = ctk.CTkButton(nova_janela, text="Fechar", command=nova_janela.destroy)
+            botao_fechar.pack(pady=10)
 
-            # Função para extrair texto de arquivos de texto (.txt)
-            def extrair_texto_txt(caminho_txt):
-                texto_extraido = ""
-                try:
-                    with open(caminho_txt, "r", encoding="utf-8") as file:
-                        texto_extraido = file.read()
-                except Exception as e:
-                    print(f"Erro ao ler o arquivo TXT: {e}")
-                return texto_extraido
+        # Função para converter áudio em texto e exibir o resultado
+        def converter_audio_texto(frame, caminho_entrada):
+            try:
+                ac.mostrar_mensagem(frame, "Convertendo áudio para texto...")
+                texto_gerado = ac.transcribe_audio(caminho_entrada)  # Chama a função de transcrição
+                ac.mostrar_mensagem(frame, "Conversão concluída!")
+                abrir_nova_guia(texto_gerado)  # Abre a nova janela com o texto gerado
+            except Exception as e:
+                ac.mostrar_mensagem(frame, f"Erro: {e}", "red")
 
-            # Função para selecionar o arquivo de entrada
-            def selecionar_arquivo():
-                caminho_arquivo = filedialog.askopenfilename(title="Selecione um arquivo", filetypes=[("Arquivos PDF", "*.pdf"), ("Arquivos Word", "*.docx"), ("Arquivos Texto", "*.txt")])
-                if caminho_arquivo:
-                    caminho_arquivo_input.delete(0, ctk.END)
-                    caminho_arquivo_input.insert(0, caminho_arquivo)
+        # Exemplo da interface gráfica com CustomTkinter
+       
+        if opc == 3:
+            label = ctk.CTkLabel(frame, text="Converter Áudio em Texto:")
+            label.pack(pady=5)
 
-            # Função para converter texto em áudio e salvar no formato escolhido
-            async def texto_para_audio(texto, idioma, voz, formato="wav", arquivo_output="audio_gerado"):
-                try:
-                    # Verificar se a voz escolhida existe no idioma
-                    if voz not in VOZES.get(idioma, []):
-                        raise ValueError(f"A voz '{voz}' não está disponível para o idioma {idioma}.")
-                    
-                    # Inicializar o cliente de TTS com a voz escolhida
-                    communicate = edge_tts.Communicate(texto, voice=voz)
+            caminho = ctk.CTkEntry(frame, **estilo, placeholder_text='Caminho do áudio')
+            caminho.pack(pady=10)
 
-                    # Definir o caminho para o arquivo de saída com a extensão
-                    caminho_arquivo = f"{arquivo_output}.{formato}"
-                    
-                    # Gerar e salvar o áudio
-                    await communicate.save(caminho_arquivo)
-                    print(f"Áudio gerado com sucesso! Salvo como: {caminho_arquivo}")
-                    return caminho_arquivo
-                
-                except Exception as e:
-                    print(f"Erro ao gerar áudio: {e}")
-                    return None
+            caminhobtn = ctk.CTkButton(frame, **botao_estilo, text='Selecionar Áudio',
+                                        command=lambda: ac.selecionar_audio(caminho))
+            caminhobtn.pack(pady=10)
 
-            # Função para o botão de conversão de texto para áudio
-            async def gerar_audio():
-                caminho_arquivo = caminho_arquivo_input.get()  # Caminho do arquivo
-                idioma = idioma_combobox.get()
-                voz = voz_combobox.get()
-                formato = formato_combobox.get()
-                nome_arquivo = nome_arquivo_input.get()  # Nome do arquivo
-                
-                if nome_arquivo == "":
-                    nome_arquivo = "audio_gerado"  # Nome padrão se o campo estiver vazio
-                
-                if caminho_arquivo:
-                    # Determinar a extensão do arquivo e extrair o texto
-                    extensao = os.path.splitext(caminho_arquivo)[1].lower()
-                    if extensao == ".pdf":
-                        texto = extrair_texto_pdf(caminho_arquivo)
-                    elif extensao == ".docx":
-                        texto = extrair_texto_docx(caminho_arquivo)
-                    elif extensao == ".txt":
-                        texto = extrair_texto_txt(caminho_arquivo)
-                    else:
-                        resultado_entry.configure(text="Formato de arquivo não suportado.")
-                        return
-                    
-                    if texto:
-                        caminho_arquivo_audio = await texto_para_audio(texto, idioma, voz, formato, nome_arquivo)
-                        if caminho_arquivo_audio:
-                            resultado_entry.configure(text=f"Áudio gerado com sucesso! Salvo como: {caminho_arquivo_audio}")
-                        else:
-                            resultado_entry.configure(text="Erro ao gerar o áudio.")
-                    else:
-                        resultado_entry.configure(text="Não foi possível extrair texto do arquivo.")
-                else:
-                    resultado_entry.configure(text="Por favor, insira o caminho do arquivo.")
+            ctk.CTkButton(frame, **botao_estilo, text="Converter",
+                            command=lambda: threading.Thread(target=converter_audio_texto, 
+                                                            args=(frame, caminho.get())).start()).pack(pady=10)
 
 
-            # Campo para o caminho do arquivo
-            caminho_arquivo_label = ctk.CTkLabel(frame, text="Caminho do arquivo:")
-            caminho_arquivo_label.pack(pady=5)
-            caminho_arquivo_input = ctk.CTkEntry(frame, **estilo, placeholder_text="Digite o caminho ou selecione o arquivo")
-            caminho_arquivo_input.pack(pady=10)
 
-            # Botão para selecionar o arquivo
-            selecionar_button = ctk.CTkButton(frame, **botao_estilo,text="Selecionar Arquivo", command=selecionar_arquivo)
-            selecionar_button.pack(pady=10)
 
-            # Combobox para idioma
-            idioma_combobox = ctk.CTkComboBox(frame, values=list(VOZES.keys()), width=200)
-            idioma_combobox.set('pt-BR')  # Valor padrão
-            idioma_combobox.pack(pady=10)
 
-            # Combobox para voz
-            voz_combobox = ctk.CTkComboBox(frame, values=list(VOZ), width=200)
-            voz_combobox.pack(pady=10)
 
-            # Combobox para formato
-            formato_combobox = ctk.CTkComboBox(frame, values=["wav", "mp3"], width=200)
-            formato_combobox.set("wav")  # Valor padrão
-            formato_combobox.pack(pady=10)
 
-            # Campo para o nome do arquivo de saída
-            nome_arquivo_label = ctk.CTkLabel(frame, text="Nome do arquivo de áudio:")
-            nome_arquivo_label.pack(pady=5)
-            nome_arquivo_input = ctk.CTkEntry(frame, **estilo, placeholder_text="Digite o nome do arquivo de áudio")
-            nome_arquivo_input.pack(pady=10)
-
-            # Botão para gerar o áudio
-            gerar_button = ctk.CTkButton(frame, **botao_estilo,text="Gerar Áudio", command=lambda: asyncio.run(gerar_audio()))
-            gerar_button.pack(pady=20)
-
-            # Label para exibir o resultado
-            resultado_entry = ctk.CTkLabel(frame, text=".")
-            resultado_entry.pack()
-
-        elif opc == 3:
-            l = ctk.CTkLabel(frame, text="em manutenção", font=("Arial", 20))
-            l.pack()
-            
     btn_estilo = {"width": 20, "height": 30, "font": ("Arial", 14)}
     
-    arquivo_audio = ctk.CTkButton(root, text="converter arquivos em pdf para audio", **btn_estilo, command=lambda: btn_audio(1)  )
-    arquivo_audio.pack(pady=10)
+    arquivo_audio_btn = ctk.CTkButton(root, text="Converter arquivos em pdf para audio", **btn_estilo, command=lambda: btn_audio(1))
+    arquivo_audio_btn.pack(pady=10)
     
-    texto_audio = ctk.CTkButton(root, text="converter texto para audio", **btn_estilo, command=lambda: btn_audio(2)  )
-    texto_audio.pack(pady=10)
+    texto_audio_btn  = ctk.CTkButton(root, text="Converter texto para audio", **btn_estilo, command=lambda: btn_audio(2))
+    texto_audio_btn.pack(pady=10)
     
-    texto_audio = ctk.CTkButton(root, text="converter audio para texto", **btn_estilo, command=lambda: btn_audio(3)  )
-    texto_audio.pack(pady=10)
+    texto_audio_btn  = ctk.CTkButton(root, text="Converter audio para texto", **btn_estilo, command=lambda: btn_audio(3))
+    texto_audio_btn.pack(pady=10)
     
 aba_audio()
 
 
 def img_fundo_video():
-    root = ctk.CTkFrame(tabview.tab("DEEP CLIP"))
-    root.pack()
     frame = ctk.CTkFrame(tabview.tab("DEEP CLIP"), fg_color="transparent")
     frame.pack()
     estilo = {"width": 300, "height": 30}
-    def selecionar_img(entry_widget):
-        arquivo_selecionado = askopenfilename(filetypes=[("Vídeos", "*.png;*")])
-        if arquivo_selecionado:
-            entry_widget.delete(0, 'end')
-            entry_widget.insert(0, arquivo_selecionado)
-    def selecionar_pasta(entry_widget):
-        pasta_selecionada = askdirectory()
-        if pasta_selecionada:
-            entry_widget.delete(0, 'end')
-            entry_widget.insert(0, pasta_selecionada)
-        
-    def mostrar_mensagem(texto, cor="green"):
-        mensagem = ctk.CTkLabel(frame, text=texto, text_color=cor)
-        mensagem.pack(pady=10)
-    
+
+    titulo = ctk.CTkLabel(frame, text='Adicionar imagem \n'
+                          'como fundo de um video', font=("Arial", 17))
+    titulo.pack()
     img_caminho = ctk.CTkEntry(frame , placeholder_text="Caminho para a imagem", **estilo)
-    img_caminho.pack(pady=5)
-    ctk.CTkButton(frame , text="Selecionar imagem", command=lambda: selecionar_img(img_caminho)).pack(pady=5)
+    img_caminho.pack()
+    ctk.CTkButton(frame , text="Selecionar imagem", command=lambda: ac.selecionar_img(img_caminho)).pack(pady=5)
     
     caminho = ctk.CTkEntry(frame , placeholder_text="Caminho da pasta com os videos", **estilo)
     caminho.pack(pady=5)
-    ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: selecionar_pasta(caminho)).pack(pady=5)
+    ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: ac.selecionar_pasta(caminho)).pack(pady=5)
     
     pasta_saida = ctk.CTkEntry(frame , placeholder_text="Pasta para salvar", **estilo)
     pasta_saida.pack(pady=5)
-    ctk.CTkButton(frame , text="Selecionar Pasta", command=lambda: selecionar_pasta(pasta_saida)).pack(pady=5)
+    ctk.CTkButton(frame , text="Selecionar Pasta", command=lambda: ac.selecionar_pasta(pasta_saida)).pack(pady=5)
 
     
     def deep():
         try:
-            mostrar_mensagem("junando o fundo da imagem com o  video...")
+            ac.mostrar_mensagem(frame, "junando o fundo da imagem com o  video...")
             ac.process_videos_in_folder(img_caminho.get(), caminho.get(), pasta_saida.get())
-            mostrar_mensagem("junção concluída!")
+            ac.mostrar_mensagem(frame, "junção concluída!")
         except Exception as e:
-            mostrar_mensagem(f"Erro: {e}", "red")
+            ac.mostrar_mensagem(frame, f"Erro: {e}", "red")
     ctk.CTkButton(frame , text="junta", command=lambda: threading.Thread(target=deep).start()).pack(pady=10)
 
 img_fundo_video()

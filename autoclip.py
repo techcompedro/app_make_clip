@@ -4,11 +4,12 @@ import os
 import customtkinter as ctk
 import autoclip as ac
 import yt_dlp
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from tiktok_downloader import snaptik
-from tkinter.filedialog import askdirectory
+from tkinter.filedialog import askdirectory, askopenfilename
 from moviepy import VideoFileClip, clips_array
-
+import whisper
+import warnings
 from datetime import datetime
 import customtkinter as ctk
 from datetime import datetime
@@ -318,3 +319,53 @@ def baixar_video_tiktok(url, pasta_destino):
         messagebox.showinfo("Concluído", f"Download concluído com sucesso! Vídeo salvo em: {caminho_completo}")
 
 
+
+warnings.filterwarnings("ignore", category=UserWarning)  # Ignora avisos do tipo UserWarning
+warnings.filterwarnings("ignore", category=FutureWarning)  # Ignora avisos de futuro
+def transcribe_audio(input_file):
+    try:
+        # Carrega o modelo de transcrição do Whisper
+        model = whisper.load_model("base")  # Escolha o modelo adequado ao seu hardware
+
+        # Realiza a transcrição do áudio
+        result = model.transcribe(input_file, language='pt')  # Define o idioma como português
+
+        # Retorna o texto transcrito
+        return result['text']
+    except Exception as e:
+        # Retorna uma mensagem de erro em caso de falha
+        return f"Erro na transcrição: {e}"
+
+def mostrar_mensagem(frame,texto, cor="green"):
+    mensagem = ctk.CTkLabel(frame,text=texto, text_color=cor)
+    mensagem.pack(pady=10)
+
+def selecionar_video(entry_widget):
+        arquivo_selecionado = askopenfilename(filetypes=[("Vídeos", "*.mp4;*.avi;*.mkv")])
+        if arquivo_selecionado:
+            entry_widget.delete(0, 'end')
+            entry_widget.insert(0, arquivo_selecionado)
+
+def selecionar_pasta(entry_widget):
+        pasta_selecionada = askdirectory()
+        if pasta_selecionada:
+            entry_widget.delete(0, 'end')
+            entry_widget.insert(0, pasta_selecionada)
+
+def selecionar_img(entry_widget):
+    arquivo_selecionado = askopenfilename(filetypes=[("Vídeos", "*.png;*")])
+    if arquivo_selecionado:
+        entry_widget.delete(0, 'end')
+        entry_widget.insert(0, arquivo_selecionado)
+
+def selecionar_audio(entry_widget):
+    arquivo_selecionado = askopenfilename(filetypes=[("Audios", "*.mp3;*")])
+    if arquivo_selecionado:
+        entry_widget.delete(0, 'end')
+        entry_widget.insert(0, arquivo_selecionado)
+
+def selecionar_arquivo(entry_widget):
+    caminho_arquivo = filedialog.askopenfilename(title="Selecione um arquivo", filetypes=[("Arquivos PDF", "*.pdf"), ("Arquivos Word", "*.docx"), ("Arquivos Texto", "*.txt")])
+    if caminho_arquivo:
+        entry_widget.delete(0, ctk.END)
+        entry_widget.insert(0, caminho_arquivo)
