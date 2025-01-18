@@ -7,7 +7,7 @@ from moviepy import VideoFileClip, clips_array
 import edge_tts
 import asyncio
 import pdfplumber
-from tkinter import filedialog
+
 from docx import Document
 
 # Configuração da janela principal
@@ -86,7 +86,7 @@ def clipmix():
             def renomear_videos():
                 try:
                     renomeados = ac.rename_clip(caminho.get(), novo_nome.get())
-                    mostrar_mensagem(f"Renomeados: {renomeados} vídeos.")
+                    mostrar_mensagem(f"Renomeados: {renomeados} arquivos.")
                 except Exception as e:
                     mostrar_mensagem(f"Erro: {e}", "red")
 
@@ -265,11 +265,11 @@ def tela_inicial():
                         ctk.CTkButton(frame , text="Selecionar a pasta", command=lambda: ac.selecionar_pasta(entry_destino_youtube)).pack(pady=5)
                         def baixar_video_y():
                             try:
-                                ac.mostrar_mensagem("Baixando vídeo...")
+                                ac.mostrar_mensagem(frame,"Baixando vídeo...")
                                 ac.baixar_video_youtube(entry_url_youtube.get(), entry_destino_youtube.get())
-                                ac.mostrar_mensagem("download concluído!")
+                                ac.mostrar_mensagem(frame,"download concluído!")
                             except Exception as e:
-                                ac.mostrar_mensagem(f"Erro: {e}", "red")
+                                ac.mostrar_mensagem(frame,f"Erro: {e}", "red")
                             
                         
                         ctk.CTkButton(frame, text="Baixar YouTube",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_y).start()).pack(pady=20)
@@ -292,11 +292,11 @@ def tela_inicial():
 
                         def baixar_video_inst():
                             try:
-                                ac.mostrar_mensagem("Baixando vídeo...")
+                                ac.mostrar_mensagem(frame,"Baixando vídeo...")
                                 ac.baixar_video_instagram(entry_url_instagram.get(), entry_destino_instagram.get())
-                                ac.mostrar_mensagem("download concluído!")
+                                ac.mostrar_mensagem(frame,"download concluído!")
                             except Exception as e:
-                                ac.mostrar_mensagem(f"Erro: {e}", "red")
+                                ac.mostrar_mensagem(frame,f"Erro: {e}", "red")
                            
                         
                         ctk.CTkButton(frame, text="Baixar Instagram",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_inst).start()).pack(pady=20)
@@ -319,11 +319,11 @@ def tela_inicial():
                         
                         def baixar_video_tik():
                             try:
-                                ac.mostrar_mensagem("Baixando vídeo...")
+                                ac.mostrar_mensagem(frame,"Baixando vídeo...")
                                 ac.baixar_video_tiktok(entry_url_tiktok.get(), entry_destino_tiktok.get())
-                                ac.mostrar_mensagem("download concluído!")
+                                ac.mostrar_mensagem(frame,"download concluído!")
                             except Exception as e:
-                                ac.mostrar_mensagem(f"Erro: {e}", "red")
+                                ac.mostrar_mensagem(frame,f"Erro: {e}", "red")
                             
                         
                         ctk.CTkButton(frame, text="Baixar TikTok",  **botao_estilo,command=lambda: threading.Thread(target=baixar_video_tik).start()).pack(pady=20)

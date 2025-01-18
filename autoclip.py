@@ -2,7 +2,6 @@ from PIL import Image
 import moviepy as mp
 import os
 import customtkinter as ctk
-import autoclip as ac
 import yt_dlp
 from tkinter import messagebox, filedialog
 from tiktok_downloader import snaptik
@@ -13,6 +12,7 @@ import warnings
 from datetime import datetime
 import customtkinter as ctk
 from datetime import datetime
+
 def cut_clip(caminho_video, pasta_saida, intervalo):
     # Verifica se o arquivo existe
     if not os.path.exists(caminho_video):
@@ -139,7 +139,7 @@ def rename_clip(caminho, texto):
         files = sorted(os.listdir(caminho))
 
         # Filtra apenas arquivos de vídeo
-        video_extensions = ['.mp4', '.mkv', '.avi', '.mov', '.flv']
+        video_extensions = ['.mp4', '.mkv', '.avi', '.mov', '.flv','.pdf','.png']
         videos = [f for f in files if os.path.splitext(f)[1].lower() in video_extensions]
 
         # Renomeia cada vídeo
