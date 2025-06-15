@@ -7,9 +7,9 @@ from moviepy import VideoFileClip, clips_array
 import edge_tts
 import asyncio
 import pdfplumber
-
+from tkinter import messagebox
 from docx import Document
-
+from datetime import datetime
 # Configuração da janela principal
 ctk.set_appearance_mode("light")  # Modo claro
 ctk.set_default_color_theme("blue")  # Tema azul
@@ -234,7 +234,7 @@ def clipmix():
 clipmix()
 
 # Funções para baixar vídeos
-def tela_inicial():
+def baixar_videos():
         root = ctk.CTkFrame(tabview.tab("BAIX CLIP"))
         root.pack()
         frame = ctk.CTkFrame(tabview.tab("BAIX CLIP"), fg_color="transparent")
@@ -346,7 +346,7 @@ def tela_inicial():
         botao_tiktok = ctk.CTkButton(root, text="TikTok",  **botao_esti,command=lambda: btn_click_baixar(3))
         botao_tiktok.pack(pady=10)
 
-tela_inicial()
+baixar_videos()
 
 
 def aba_audio():
@@ -647,10 +647,63 @@ def aba_audio():
                             command=lambda: threading.Thread(target=converter_audio_texto, 
                                                             args=(frame, caminho.get())).start()).pack(pady=10)
 
+        elif opc == 4:
+            def separar_audio_video(video):
+                data = datetime.now().strftime("%d/%m/%Y")
+                if not os.path.exists(video):
+                    status_label.configure(text="Erro: O arquivo de vídeo não existe.", text_color="red")
+                    return
+                
+                caminho_saida = pasta_saida.get()
+                if not os.path.isdir(caminho_saida):
+                    status_label.configure(text="Erro: O caminho de saída não é válido.", text_color="red")
+                    return
 
+                try:
+                    status_label.configure(text="Processando...", text_color="yellow")
+                    
+                    video_clip = VideoFileClip(video)
+                    
+                    # Extraindo e salvando áudio
+                    audio = video_clip.audio
+                    audio.write_audiofile(os.path.join(caminho_saida, f"audio_extraido_{data}.mp3"))
+                    
+                    # Removendo o áudio do vídeo
+                    video_sem_audio = video_clip.without_audio()
+                    video_sem_audio.write_videofile(os.path.join(caminho_saida, f"video_sem_audio_{data}s.mp4"))
 
+                    # Atualizar mensagem de sucesso
+                    status_label.configure(text="Processo concluído com sucesso!", text_color="green")
+                    messagebox.showinfo("Sucesso", "Processo concluído com sucesso!")
+                
+                except Exception as e:
+                    status_label.configure(text="Erro ao processar o vídeo.", text_color="red")
+                    messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
 
+            def iniciar_conversao():
+                caminho_video = video_ex_audio.get()
+                if not caminho_video:
+                    status_label.configure(text="Erro: Selecione um vídeo!", text_color="red")
+                    return
+                
+                status_label.configure(text="Iniciando processo...", text_color="yellow")
+                threading.Thread(target=separar_audio_video, args=(caminho_video,)).start()
 
+            label = ctk.CTkLabel(frame, text="Remover áudio do vídeo")
+            label.pack(pady=5)
+
+            video_ex_audio = ctk.CTkEntry(frame, placeholder_text="Selecione o vídeo")
+            video_ex_audio.pack(pady=5)
+            ctk.CTkButton(frame, text="Selecionar Vídeo", command=lambda: ac.selecionar_video(video_ex_audio)).pack(pady=5)
+
+            pasta_saida = ctk.CTkEntry(frame, placeholder_text="Pasta para salvar")
+            pasta_saida.pack(pady=5)
+            ctk.CTkButton(frame, text="Selecionar Pasta", command=lambda: ac.selecionar_pasta(pasta_saida)).pack(pady=5)
+
+            status_label = ctk.CTkLabel(frame, text="", text_color="green")
+            status_label.pack(pady=5)
+
+            ctk.CTkButton(frame, text="Confirmar", command=iniciar_conversao).pack(pady=10)
 
 
     btn_estilo = {"width": 20, "height": 30, "font": ("Arial", 14)}
@@ -663,6 +716,9 @@ def aba_audio():
     
     texto_audio_btn  = ctk.CTkButton(root, text="Converter audio para texto", **btn_estilo, command=lambda: btn_audio(3))
     texto_audio_btn.pack(pady=10)
+
+    remover_audio_btn  = ctk.CTkButton(root, text="Remover audio do vídeo", **btn_estilo, command=lambda: btn_audio(4))
+    remover_audio_btn.pack(pady=10)
     
 aba_audio()
 

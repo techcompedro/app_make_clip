@@ -336,6 +336,8 @@ def transcribe_audio(input_file):
         # Retorna uma mensagem de erro em caso de falha
         return f"Erro na transcrição: {e}"
 
+
+
 def mostrar_mensagem(frame,texto, cor="green"):
     mensagem = ctk.CTkLabel(frame,text=texto, text_color=cor)
     mensagem.pack(pady=10)
